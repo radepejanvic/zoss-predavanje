@@ -27,7 +27,7 @@ Sistem objedinjuje podatke o javnom prevozu, servisima za iznamljivanje bicikala
 | Korisnička podrška (sekundarno)   | Automatizovana podrška korisnicima kroz chat servis zasnovan na LLM-u.                       |
 ## 2. Arhitektura sistema
 Zamišljeni softver je projektovan kao distribuiran sistem zasnovan na mikroservisnoj arhitekturi, gde su ključne funkcionalnosti podeljene u nezavisne servise. Na slici 1 prikazan je pregled arhitekture sistema na apstraktnom nivou. 
-> <img src="arhitektura.svg" alt="Arhitektura sistema"/>
+> <img src="arhitektura.svg" alt="Arhitektura sistema"/> 
 *Slika 1: Arhitektura sistema*
 ### Osnovne karakteristike
 Mikroservisna arhitektura sa sledećim ključnim osobinama:
