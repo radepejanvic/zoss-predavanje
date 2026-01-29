@@ -16,9 +16,9 @@ Neke od primena Redisa su:
 - brzu razmenu poruka u realnom vremenu kroz Pub/Sub kanale
 
 ## Arhitektura
-
-
+![redis-architectzure](https://github.com/user-attachments/assets/ec8c36a8-ce60-4fb2-9ffc-eaf43d54ba2f)
 
 
 ## Reference
 https://architecturenotes.co/p/redis
+https://ashutoshkumars1ngh.medium.com/redis-architecture-why-redis-is-so-fast-and-a-deep-dive-into-internals-d153c064a549
