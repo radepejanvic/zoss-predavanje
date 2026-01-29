@@ -55,7 +55,6 @@ Redis Cluster služi za proširenje kapaciteta (skaliranje). Kada podaci postanu
 ## Primena Redisa u arhitekturi sistema
 U okviru prikazane arhitekture Smart Mobility sistema, Redis je implementiran kao keš sloj postavljen između mikroservisa koji rade kompleksne upite ili računanja i Web aplikacije koja te podatke povlači i prikazuje korisniku, sa ciljem da se smanji latencija.
 
-Integracija sa ostatkom sistema
 Integracija se oslanja na `go-redis` klijent koji omogućava efikasnu komunikaciju između Gin hendlera i Redis servera:
 - Connection Pooling: Klijent automatski održava kolekciju otvorenih konekcija ka Redisu. Ovo je ključno za Gin jer sprečava otvaranje novog TCP soketa za svaki HTTP zahtev, čime se drastično smanjuje latencija.
 - Konkurentnost (Goroutines): `go-redis` je thread-safe, što omogućava da hiljade konkurentnih Go rutina unutar Gin-a istovremeno koriste istu instancu klijenta bez rizika od konflikata.
