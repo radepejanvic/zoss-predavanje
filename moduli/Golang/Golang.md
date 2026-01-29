@@ -13,11 +13,21 @@ Golang je svestran jezik i koristi se u širokom spektru aplikacija. Posebno se 
 Go je veoma popularan u razvoju mikroservisa i distribuiranih sistema, zahvaljujući malom memorijskom otisku, brzom pokretanju i efikasnom modelu konkurentnosti. Često se koristi i za razvoj CLI alata, sistemskih utilitija i aplikacija koje zahtevaju visoke performanse i obradu velikog protoka podataka.
 
 ## Ključni elementi jezika
-Srce Go jezika čine **gorutine** i **kanali**, koji omogućavaju jednostavno i efikasno upravljanje konkurentnošću. Umesto složenih mehanizama za sinhronizaciju, Go podstiče komunikaciju između gorutina putem kanala, što vodi ka jasnijem i održivijem kodu.
 
-Rukovanje greškama u Go-u zasniva se na eksplicitnom proveravanju grešaka, umesto korišćenja izuzetaka. Iako se obrazac `if err != nil` često ponavlja, ovaj pristup podstiče programere da svesno razmišljaju o mogućim problemima i jasno definišu tok izvršavanja programa.
+<img src="golang_arc.png" alt="Golang arhitektura"/>
 
-Upravljanje resursima je pojednostavljeno pomoću ključne reči `defer`, koja omogućava pouzdano oslobađanje resursa, poput zatvaranja fajlova ili mrežnih konekcija.
+1. **Goroutine-e**
+	- Goroutine-e su jezgro Go-vog konkurentnog modela - lake, jeftine niti kojima upravlja Go runtime, ne operativni sistem. Pokretanje goroutine-a je trivijalno (samo `go` keyword), a njihova cena je minimalna (par KB memorije). Scheduler iz runtime-a inteligentno raspoređuje goroutine-e na dostupne OS niti, omogućavajući hiljadama goroutine-a da se izvršavaju konkurentno bez opterećivanja sistema.
+2. **Channel-i**
+	- Channel-i su tip-sigurne cevi za komunikaciju između goroutine-a, implementirajući "ne delite memoriju komunikacijom, već komunicirajte deljenjem memorije" filozofiju. Oni rešavaju većinu problema sinhronizacije bez potrebe za eksplicitnim lock-ovima. Runtime kroz netpoller integrisan sa OS-om omogućava efikasnu I/O operaciju bez blokiranja goroutine-a.
+3. Sync paket
+	- Sync paket nudi primitivne za sinhronizaciju niskog nivoa (Mutex, WaitGroup, Once) za retke situacije kada channel-i nisu pogodni. Iako su dostupni, Go idiomi favorizuju channel-e gde god je moguće, rezervišući sync primitivne za zaštitu deljenih struktura podataka ili koordinaciju jednostavnih zadataka.
+4. Garbage collector
+	- Automatski upravlja memorijom, oslobađajući programere brige o alokaciji/dealokaciji. Go koristi concurrent mark-and-sweep algoritam optimizovan za niske pause, što je kritično za server aplikacije. Runtime dinamički alocira i dealocira memoriju, omogućavajući goroutine-ama da se fokusiraju na logiku bez rizika od memory leak-ova.
+5. Runtime i Scheduler
+	- Runtime upravlja schedulingom goroutine-a koristeći M:N model (M goroutine-a na N OS niti). Scheduler koristi work-stealing algoritam za balansiranje opterećenja između procesorskih jezgara. Kada goroutine izvrši blokrajuću sistemsku operaciju, scheduler automatski prebacuje CPU na drugu goroutine, maksimizujući iskorišćenost resursa.
+6. Netpoller i System Calls
+	- Netpoller omogućava neblokirajuće mrežne I/O operacije kroz integraciju sa OS mehanizmima. Kada goroutine zahteva mrežnu operaciju, netpoller je parkira dok podaci ne stignu, oslobađajući scheduler da izvršava druge goroutine-e. Sistemski pozivi se rukuju kroz dedikovan interfejs koji minimizira tranzicije između user-space i kernel-space.
 
 ## Standardna biblioteka i alati
 Jedna od velikih prednosti Go-a je izuzetno bogata standardna biblioteka, koja omogućava razvoj ozbiljnih aplikacija bez oslanjanja na veliki broj eksternih paketa. Paketi poput `net/http`, `encoding/json`, `database/sql` i `io` pokrivaju većinu uobičajenih potreba.
@@ -56,7 +66,7 @@ Go ne eliminiše sve bezbednosne probleme, ali značajno smanjuje rizik od kriti
 
 ---
 
-### 2. Konkurentnost i bezbednosni izazovi
+### 2. Konkurentnost i bezbednost
 Iako Go pojednostavljuje konkurentno programiranje, ne eliminiše sve probleme koji iz njega mogu proisteći. Nepravilna upotreba gorutina i kanala može dovesti do ozbiljnih bezbednosnih posledica.
 #### 2.1 Race conditions
 - Gorutine olakšavaju paralelizam, ali:
@@ -74,7 +84,7 @@ Iako Go pojednostavljuje konkurentno programiranje, ne eliminiše sve probleme k
     - nekontrolisano kreiranje gorutina
     - neograničeni request handleri
 ---
-### 3. Tipične ranjivosti u Go aplikacijama
+### 3. Ranjivosti u Go aplikacijama
 #### 3.1 Injection napadi
 - Go sam po sebi ne štiti od injection napada
 - Opasnosti:

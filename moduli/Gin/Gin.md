@@ -1,32 +1,130 @@
 ## Uvod
 
-**Gin** je HTTP web framework visokih performansi napisan u programskom jeziku **Go**. Pruža API sličan **Martini** framework-u, ali sa znatno boljim performansama, čak do 40 puta brži, zahvaljujući *httprouter* biblioteci. Gin je namenjen za izradu REST API-ja, web aplikacija i mikroservisa, gde su brzina i produktivnost programera od ključnog značaja.
+Gin je HTTP web framework visokih performansi napisan u programskom jeziku **Go**. Pruža API sličan Martini framework-u, ali sa znatno boljim performansama, čak do 40 puta brži, zahvaljujući *httprouter* biblioteci. Gin je namenjen za izradu REST API-ja, web aplikacija i mikroservisa, gde su brzina i produktivnost programera od ključnog značaja.
 
-Gin kombinuje jednostavnost rutiranja u stilu **Express.js-a** sa performansama koje pruža Go, što ga čini idealnim za:
+Gin kombinuje jednostavnost rutiranja u stilu Express.js-a sa performansama koje pruža Go, što ga čini idealnim za:
 - Izgradnju REST API-ja sa velikim protokom zahteva
 - Razvoj mikroservisa koji moraju da obrađuju veliki broj konkurentnih zahteva
 - Kreiranje web aplikacija koje zahtevaju brzo vreme odziva
 - Brzo prototipiranje web servisa uz minimalnu količinu pomoćnog koda
 
-## Karakteristike
+## Arhitektura
 
-- **Router bez alokacija** – Izuzetno memorijski efikasno rutiranje bez alokacija na hipu
-- **Visoke performanse** – Benchmark testovi pokazuju superiornu brzinu u poređenju sa drugim Go web frameworks
-- **Podrška za middleware** – Dolazni HTTP zahtev može biti obrađen kroz lanac middleware-a i završnu akciju. Na primer: Logger, autorizacija, GZIP kompresija i na kraju upis poruke u bazu podataka.
-- **Otpornost na padove** – Ugrađeni recovery middleware sprečava se sruši server.Gin može da uhvati paniku (_panic_) koja se dogodi tokom obrade HTTP zahteva i da se od nje oporavi. Na taj način server ostaje uvek dostupan.
-- **JSON validacija** – Automatsko mapiranje i validacija JSON zahteva i odgovora
-- **Grupisanje ruta** – Dobra organizacija ruta, npr. rute koje zahtevaju autorizaciju i one koje je ne zahtevaju, različite verzije API-ja itd. Pored toga, grupe se mogu neograničeno ugnjezdavati bez narušavanja performansi.
-- **Upravljanje greškama** – Gin pruža praktičan način za prikupljanje svih grešaka koje se dese tokom obrade jednog HTTP zahteva. Na kraju, middleware može te greške upisati u log fajl, bazu podataka ili ih poslati preko mreže.
-- **Ugrađeno renderovanje** – Podrška za JSON, XML, HTML templejte i druge formate
-- **Proširivost** – Veliki ekosistem community middleware-a i dodataka
+<img src="Gin_architecture.png" alt="GIN arhitektura"/>
+
+1. Jezgro sistema
+	- Engine
+		- Centralni koordinator – `gin.Engine` je glavna struktura koja upravlja celokupnim životnim ciklusom aplikacije
+		- Konfiguracija – Čuva globalnu konfiguraciju, uključujući middleware-e, templejt engine, i podešavanja za HTML renderovanje
+		- Pool objekata – Koristi `sync.Pool` za efikasno recikliranje `Context` objekata i smanjenje opterećenja garbage collector-a
+		- Funkcionalnosti:
+		    - Inicijalizacija i pokretanje HTTP servera
+		    - Registracija ruta i middleware-a
+		    - Upravljanje RouterGroup objektima -> (omogućavaju hijerarhijsku organizaciju ruta sa zajedničkim prefiksima i middleware-ima.)
+	- Context
+		- enkapsulira HTTP zahtev i odgovor. Svaki dolazni zahtev dobija sopstveni Context objekat koji se reciklira nakon obrade.
+		- Pruža pristup HTTP zahtevu (`*http.Request`) i odgovoru (`http.ResponseWriter`)
+		- Omogućava pristup URL parametrima, query parametrima i podacima iz forme
+		- **Executes** - Izvršava HandlersChain (lanac middleware-a i handler-a)
+		- Pruža metode za renderovanje (JSON, XML, HTML, String, File)
+		- Čuva session podatke kroz ključ-vrednost mapu
+2. Routing Podsistem
+	- Httprouter (RadixTree)
+	- Implementacija radix tree algoritma koji omogućava izuzetno brzo pronalaženje ruta.
+	- Karakteristike:
+		- Podrška za parametrizovane rute (`/user/:id`)
+		- Podrška za wildcard rute (`/files/*filepath`)
+		- Zero memory allocations - Ne pravi heap alokacije tokom rutiranja
+		- Returns - Vraća HandlersChain koji odgovara pronađenoj ruti 
+3. Middleware Podsistem
+	- Middleware lanac
+		- Funkcionalni wrapper – Svaki middleware je funkcija oblika `func(*Context)`
+		- Next() mehanizam – `c.Next()` poziva sledeći middleware/handler u lancu
+		- Abort() mehanizam – `c.Abort()` prekida izvršavanje lanca
+	- Ugrađeni middleware-i
+		- Logger – Logovanje dolaznih zahteva sa detaljima (metod, URL, status kod, trajanje)
+		- Recovery – Hvatanje panic-a i sprečavanje pada servera
+		- CORS – Cross-Origin Resource Sharing
+		- BasicAuth – HTTP Basic autentifikacija
+		- Gzip – Kompresija odgovora
+4. Binding i validacija
+	- Binding paket omogućava automatsko mapiranje podataka iz HTTP zahteva u Go strukture sa validacijom.
+	- Binding engine
+		- **Model binding** – Automatsko mapiranje podataka iz zahteva u Go strukture
+		- **Izvori podataka**:
+		    - JSON body (`c.ShouldBindJSON()`)
+		    - XML body (`c.ShouldBindXML()`)
+		    - Form data (`c.ShouldBind()`)
+		    - Query parametri (`c.ShouldBindQuery()`)
+		    - Headers (`c.ShouldBindHeader()`)
+		    - URI parametri (`c.ShouldBindUri()`)
+	- Validator
+		- Tag-based validacija – Korišćenje struct tag-ova za definisanje pravila:
+		- ```
+			  type User struct {
+			    Email    string `json:"email" binding:"required,email"`
+			    Age      int    `json:"age" binding:"gte=0,lte=130"`
+			    Password string `json:"password" binding:"required,min=8"`
+			}
+		  ```
+		- Automatska validacija nakon binding-a
+		- Podrška za custom validatore
+		- Detaljna error poruke za nevalidne podatke
+5. Renderovanje
+	- Render paket omogućava generisanje HTTP odgovora u različitim formatima kroz unificirani interfejs.
+	- Render interface
+		- Centralni interfejs koji definiše kako se podaci renderuju u HTTP odgovor. Različite implementacije podržavaju različite formate.
+		- Content-Type handling – Automatsko postavljanje odgovarajućih header-a
+		- Tipovi renderera:
+			- JSON (sa opcijom za Pretty print)
+			- XML
+			- HTML (sa template engine-om)
+			- YAML
+			- ProtoBuf
+			- Plain text
+			- Binary data
+6. Upravljanje greškama
+	- Error collection
+
+		- Error lista – Context čuva niz svih grešaka nastalih tokom obrade zahteva
+		- Error types – Kategorizacija grešaka (public, private, binding errors)
+		- Metadata – Mogućnost dodavanja dodatnih informacija uz grešku
+	
+	- Error handling middleware
+		- Centralizovano rukovanje – Jedan middleware na kraju lanca obrađuje sve greške
+		- Formatiranje odgovora – Transformacija grešaka u odgovarajući format (JSON, XML, itd.)
+		- Logovanje – Automatsko zapisivanje grešaka u log
+7. Mehanizmi za optimizaciju
+	-  Object pooling
+		- sync.Pool za Context – Recikliranje Context objekata između zahteva
+		- Smanjenje GC pritiska – Manje heap alokacija = ređe pokretanje garbage collector-a
+	- Zero-copy operations
+		- Direktan pristup baferima – Izbegavanje nepotrebnog kopiranja podataka
+		- Response streaming – Efikasno slanje velikih odgovora
+	- Lazy parsing
+		- On-demand parsiranje – Parametri i body se parsiraju samo kad se zatraže
+		- Keširano parsiranje – Rezultati se čuvaju u Context-u za ponovnu upotrebu
+8. Tok obrade klasičnog zahteva
+	1. Dolazak zahteva → HTTP zahtev stiže na gin.Engine
+	2. Alociranje Context-a → Engine alocira gin.Context iz pool-a
+	3. Rutiranje → RouterGroup pronalazi odgovarajuću rutu u Engine.trees
+	4. Pronalaženje handler-a → tree.node (radix tree) vraća HandlersChain
+	5. Binding → Context koristi binding.Binding za parsiranje podataka
+	6. Validacija → validator validira parsovane podatke
+	7. Izvršavanje lanca → Context izvršava HandlersChain (middleware + handler)
+	8. Renderovanje → Handler koristi render.Render za generisanje odgovora
+	9. Vraćanje odgovora → HTTP odgovor se šalje klijentu
+	10. Recikliranje → Context se vraća u sync.Pool za ponovno korišćenje
+
 
 ## Poređenje sa drugim frameworks
 
 This benchmark tests how fast a framework can perform concurrent HTTP requests, I/O operations, and JSON de/serialization.  
   
 OS: Linux/DockerCPU: Ryzen 7 7800X3DLast Updated: 2025-08-24
-![[frameworksComparison.png]]
-<img src="frameworksComparison.png" alt="Hadoop arhitektura"/>   
+
+<img src="frameworksComparison.png" alt="Framework poredjenje"/> 
+
 preuzeto sa https://sharkbench.dev/web/go
 
 

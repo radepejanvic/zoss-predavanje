@@ -18,88 +18,132 @@ Oko Hadoop jezgra razvijen je čitav ekosistem servisa koji rešavaju specifičn
 
 Važno je naglasiti da ovi alati nisu deo osnovnog Hadoop jezgra, ali u praksi igraju ključnu ulogu u izgradnji kompletnih big data platformi. Oni koriste osnovne Hadoop servise (HDFS, YARN i ostale) kao infrastrukturnu osnovu, dok sami obezbeđuju napredne funkcionalnosti prilagođene konkretnim poslovnim potrebama.
 
-<img src="HadoopArchitecture.png" alt="Hadoop arhitektura"/> 
+<img src="HadoopArchitecture.png" alt="Hadoop arhitektura"/>   
 
 Četiri osnovne komponente Hadoop-a čine temelj njegovog sistema i omogućavaju distribuirano skladištenje i obradu podataka.
 ### 1. Hadoop Common
-Predstavlja skup osnovnih Java biblioteka koje su zajedničke svim Hadoop modulima i omogućavaju njihovo pravilno funkcionisanje.
+Hadoop Common predstavlja skup osnovnih Java biblioteka i pomoćnih alata koji služe kao temelj celokupnog Hadoop ekosistema. Ove biblioteke obezbeđuju zajedničke funkcionalnosti koje koriste svi ostali Hadoop moduli.
+
+Ključne funkcionalnosti:
+- Apstrakcija fajl sistema koja omogućava rad sa različitim sistemima za skladištenje (HDFS, Amazon S3, Azure Blob Storage)
+- Biblioteke za serijalizaciju i deserijalizaciju podataka
+- Mehanizmi za autentifikaciju i autorizaciju korisnika
+- Alatke za upravljanje konfiguracijom sistema
+- RPC (Remote Procedure Call) biblioteke za komunikaciju između komponenti
+
+Hadoop Common omogućava da sve komponente Hadoop-a lako komuniciraju i dele zajedničku infrastrukturu, što olakšava razvoj i održavanje sistema.
 
 ### 2. Hadoop Distributed File System (HDFS)
 HDFS je distribuirani fajl sistem sa podrškom za velike skupove podataka, koji obezbeđuje visok protok podataka uz visoku dostupnost i otpornost na greške.
 
-Jednostavno rečeno, to je skladišna komponenta Hadoop-a — čuva velike količine podataka raspoređene na više mašina i može da radi na standardnom hardveru, što ga čini isplativim rešenjem.
+To je skladišna komponenta Hadoop-a — čuva velike količine podataka raspoređene na više mašina i može da radi na standardnom hardveru, što ga čini isplativim rešenjem.
 
+#### Čvorovi (Nodes)
+Master-slave čvorovi obično formiraju **HDFS klaster**.
+1. NameNode (Glavni Čvor)**:
+    - Upravlja svim podređenim čvorovima i dodeljuje im poslove.
+    - Izvršava operacije nad prostorom imena sistema datoteka kao što su otvaranje, zatvaranje i preименовање datoteka i direktorijuma.
+    - Treba da bude postavljen na pouzdanom hardveru visoke konfiguracije, a ne na standardnom hardveru (pre svega veća količina RAM memorije).
+2. DataNode (Podređeni Čvor):
+    - Pravi radni čvorovi koji obavljaju stvarni posao poput čitanja, pisanja, obrade, itd.
+    - Takođe izvršavaju kreiranje, brisanje i replikaciju na osnovu instrukcija od glavnog čvora.
+    - Mogu biti postavljeni na standardnom hardveru.
+    - Zahtevaju veliku memoriju jer se ovde zapravo čuvaju podaci.
+
+<img src="HDFS.png" alt="HDFS arhitektura"/>   
+
+Kada se unese velika datoteka (npr. 100TB), NameNode (glavni čvor) je deli na blokove po 128MB. Ti blokovi se distribuiraju i čuvaju na različitim DataNode-ovima (radnim čvorovima). Svaki blok se automatski replicira 3 puta (podrazumevano) na različite čvorove radi otpornosti na kvar. NameNode vodi evidenciju gde se nalazi svaki blok i njene replike.
+
+Lakše je čuvati i obrađivati mnogo malih blokova nego jednu ogromnu datoteku - brži pristup podacima i manje vreme pretrage.
+
+Ako neki DataNode otkaže, podaci nisu izgubljeni jer postoje kopije na drugim čvorovima - sistem nastavlja da radi bez problema.
 ### 3. Hadoop YARN
 YARN (Yet Another Resource Negotiator) obezbeđuje okvir za raspoređivanje poslova i upravlja sistemskim resursima u distribuiranim sistemima.
+To je komponenta za upravljanje resursima u Hadoop-u, koja kontroliše resurse korišćene za obradu podataka smeštenih u HDFS-u.
+#### Glavne komponente YARN arhitekture
+<img src="hadoop_YARN.png" alt="YARN arhitektura"/>   
 
-Ukratko, to je komponenta za upravljanje resursima u Hadoop-u, koja kontroliše resurse korišćene za obradu podataka smeštenih u HDFS-u.
+**1) Klijent (Client)**
+Pokreće i šalje aplikaciju (npr. MapReduce posao) YARN-u. Komunicira sa Resource Manager-om, prati status posla i dobija ažuriranja od Application Master-a. Predstavlja korisnički interfejs za pokretanje aplikacija na Hadoop klasteru.
+
+**2) Resource Manager**
+Glavni demon YARN-a odgovoran za dodelu i upravljanje resursima za sve aplikacije. Ima dve glavne komponente:
+
+- **Scheduler**: Raspoređuje poslove na osnovu dostupnih resursa. Čisti raspoređivač - ne prati izvršavanje niti garantuje restart ako posao ne uspe. Podržava dodatke kao Capacity i Fair Scheduler.
+- **Application Manager**: Prihvata aplikacije i pregovara o prvom kontejneru sa Resource Manager-om. Restartuje Application Master kontejner ako dođe do greške.
+
+**3) Node Manager**
+Upravlja pojedinačnim čvorom u klasteru. Registruje se kod Resource Manager-a i šalje periodične signale o stanju čvora. Prati upotrebu resursa, upravlja logovima i ubija kontejnere po nalogu Resource Manager-a. Kreira kontejner proces na zahtev Application Master-a.
+
+**4) Application Master**
+Odgovoran za jednu aplikaciju - pregovara o resursima sa Resource Manager-om, prati status i napredak aplikacije. Zahteva kontejnere od Node Manager-a šaljući Container Launch Context (CLC) koji sadrži sve potrebno za pokretanje aplikacije. Periodično šalje izveštaje Resource Manager-u.
+
+**5) Container**
+Kolekcija fizičkih resursa (RAM, CPU jezgra, disk) na jednom čvoru. Pokreće se preko Container Launch Context-a (CLC) koji sadrži informacije kao što su promenljive okruženja, sigurnosni tokeni i zavisnosti.
+
+#### Workflow
+→ Klijent podnese aplikaciju 
+→ Resource Manager dodeljuje kontejner i pokreće Application Master 
+→ Application Master se registruje kod Resource Manager-a 
+→ Application Master pregovara o kontejnerima sa Resource Manager-om 
+→ Application Master naređuje Node Manager-ima da pokrenu kontejnere 
+→ Aplikacija se izvršava u kontejnerima 
+→ Klijent prati status preko Resource Manager-a/Application Master-a 
+→ Po završetku, Application Master se odjavljivuje i oslobađa resurse.
 
 ### 4. Hadoop MapReduce
 
-Jednostavan programski model koji obrađuje podatke paralelno tako što nestrukturisane podatke pretvara u parove ključ–vrednost (mapiranje), zatim ih raspoređuje po čvorovima i kombinuje rezultate u konačni izlaz (redukcija).
+MapReduce je Hadoop framework za obradu velikih podataka raspoređenih na više mašina. Radi direktno sa podacima smeštenim u HDFS-u i deli veliki dataset na manje delove koji se obrađuju paralelno.
 
-To je centralni mehanizam obrade podataka Hadoop-a, koji obezbeđuje glavne mogućnosti obrade kroz dve faze glavne faze: mapiranje i redukciju.
+#### Proces
+<img src="MapReduce.png" alt="MapReduce steps"/>
+**1. Input Split (Podela ulaza)**
+Ulazni podaci se dele na manje delove zvane Input Splits. Svaki split obrađuje zaseban Mapper. 
 
-<img src="MapReduce.png" alt="Hadoop arhitektura"/> 
+**2. Mapper faza**
+Svaki Mapper radi paralelno na različitim čvorovima i obrađuje jedan split.
+- Čita podatke liniju po liniju
+- Transformiše ih u ključ-vrednost parove
+- Čuva privremeni izlaz lokalno (ne u HDFS)
 
+**3. Shuffling & Sorting (Mešanje i sortiranje)**
+Hadoop automatski:
+- Razvrstava privremene ključ-vrednost parove
+- Grupište sve vrednosti sa istim ključem
+- Sortira ih pre slanja Reducer-u
+
+**4. Reducer faza**
+Reducer prima listu vrednosti za svaki jedinstveni ključ.
+- Primenjuje agregaciju (suma, prosek, filtriranje)
+- Generiše finalni izlaz
+- Čuva rezultat u HDFS
 ## Bezbednost
 Bezbednost Hadoop-a predstavlja jedinstvene izazove zbog njegove distribuirane arhitekture i oslanjanja na servise trećih strana, što ga čini posebno ranjivim na napade ako nije pravilno zaštićen.
 
-### Izazovi bezbednosti Hadoop-a
-Implementacije Hadoop-a podložne su svim bezbednosnim izazovima koji važe za savremene distribuirane sisteme. Ovi izazovi se razlikuju od monolitnih aplikacija koje pristupaju tradicionalnim bazama podataka.
-
-**Primeri:**
-- Podaci u Hadoopu su raspoređeni na više čvorova. Bez pravilnog šifrovanja podataka u mirovanju, kompromitovan čvor može omogućiti neovlašćenom korisniku da pristupi delovima fajlova, otkrije osetljive podatke ili menja vrednosti.
-
-- Servisi u Hadoopu obično rade na odvojenim čvorovima i koriste mrežu za međusobnu komunikaciju. Bez pravilnog šifrovanja podataka u transportu, sistem je ranjiv na man-in-the-middle napade. Napadač može presresti osetljive podatke ili ubaciti maliciozni kod.
-
-Ono što Hadoop čini posebno složenim je veliki broj servisa trećih strana u ekosistemu koji se koriste za specifične potrebe. Mnogi od ovih servisa mogu raditi i nezavisno od Hadoop-a, pa imaju svoje samostalne bezbednosne implementacije i podrazumevane konfiguracije.
-
-Zbog toga je važno imati sveobuhvatnu strategiju bezbednosti za Hadoop klaster, kako bi se pojedinačni servisi mogli konfigurisati tako da koriste jedinstveni pristup u rešavanju uobičajenih bezbednosnih problema. U suprotnom, čitav sistem može biti ranjiv na krađu podataka i prekide servisa.
-
-### Osnovni principi bezbednosti
-Rani dizajn i razvoj Hadoop-a fokusirao se na visoku dostupnost i skalabilnost skladištenja i analitike podataka; bezbednost nije bila ključna komponenta. Ali u produkcionim implementacijama bezbednost mora biti temeljna stavka.
-
-Pet ključnih oblasti na koje treba obratiti pažnju kako bi se osigurala osnovna bezbednost informacija (poverljivost, integritet i dostupnost):
-1. **Autentifikacija** – Osigurava da samo poznati i registrovani korisnici i servisi mogu pristupiti Hadoop klasteru.
-
-2. **Autorizacija** – Zahteva da autentifikovani korisnici i servisi imaju eksplicitno odobren pristup aplikacijama, podacima i servisima kojima upravlja Hadoop klaster.
-
-3. **Šifrovanje** – Štiti podatke koji su pohranjeni (_at rest_) u sistemu, kao i podatke koji se prenose (in motion) unutar sistema, od neovlašćenog pristupa.
-
-4. **Izolacija** – Sprečava da jedan korisnik, servis ili grupa troši resurse klastera na način koji bi kompromitovao performanse za druge korisnike ili ugrozio dostupnost sistema u celini.
-
-5. **Sanacija (Remediation)** – Kombinacija alata i procesa koji prate sistem i preduzimaju akcije kako bi identifikovali i otklonili pretnje bezbednosti, dostupnosti ili stabilnosti.
-
-### Najbolje prakse za poboljšanje bezbednosti
-Bezbednost u Hadoopu mora se implementirati **u slojevima**, kako bi se kreirala robusna strategija koja garantuje poverljivost, integritet i dostupnost sistema. Svaki sloj može zaštititi ceo sistem, ali ga treba posmatrati kao prepreku za napadače, a ne kao zid. Ključno je implementirati svaki sloj kako bi se odbili napadi i minimalizovali efekti eventualnog proboja.
-
-**Preporučene prakse:**
-- **Promenite podrazumevane lozinke i komunikacione portove**  
-    Mnogi servisi u Hadoop ekosistemu imaju podrazumevane korisničke podatke i lozinke, kao i portove za komunikaciju. Ovi podaci su lako dostupni u dokumentaciji i repozitorijumima koda, pa ih je neophodno promeniti kako bi se sprečio neovlašćen pristup.
-
-- **Koristite privatnu mrežu**  
-    Hadoop klaster i povezani servisi trebalo bi da budu na privatnoj mreži, koja nije dostupna sa interneta (uz VPN za daljinski pristup po potrebi). Ako to nije moguće, koristite firewall, reverse proxy i bezbedne gateway tehnike da sakrijete detalje implementacije od potencijalnih napadača.
-
-- **Koristite Kerberos autentifikacioni protokol**  
-    Kerberos omogućava:
-    - **Recipročnu autentifikaciju** – i klijent i server verifikuju identitet pre pristupa, smanjujući rizik od man-in-the-middle napada.
-    - **Single sign-on (SSO)** – korisnik pristupa svim servisima bez višestrukog unosa lozinke; koristi se privremeni tiket za naredne zahteve, smanjujući šansu za otmicu sesije.
-
-- **Šifrovanje podataka**
-    - Koristite Transparent Data Encryption (TDE) u HDFS-u za šifrovanje podataka u mirovanju.
-    - Konfigurišite SSL/TLS za šifrovanje saobraćaja u transportu između klijenata i servisa.
-
-- **Upravljanje dozvolama preko RBAC-a (Role-Based Access Control)**  
-    Omogućava organizovan, politikama zasnovan pristup podacima i servisima, olakšava audit i održavanje privilegija.
-
-- **Princip najmanjih privilegija (PoLP)**  
-    Korisnici i servisi dobijaju minimalan pristup potreban za obavljanje zadataka. Ovo ograničava pristup pojedinačnih korisnika i smanjuje površinu napada u slučaju kompromitovanja naloga.
 
 ### Alati za bezbednost
 Postoji nekoliko alata koji se često koriste za implementaciju i upravljanje bezbednošću Hadoop-a. Osnovni su već pomenuti Kerberos i TDE. Ostali važni alati:
-- **YARN Capacity Scheduler** – ugrađen u Hadoop, koristi se za dodelu kvota korisnicima i servisima, čime se obezbeđuje izolacija resursa i stabilnost sistema.
+- **YARN Capacity Scheduler** – ugrađen scheduler u Hadoop-u koji omogućava deljenje velikog klastera između više organizacija uz garantovane kapacitete (kvote) za svaku, čime se izbegavaju troškovi privatnih klastera i postiže bolja iskorišćenost resursa. Organizacije dele klaster prema svojim potrebama, ali mogu koristiti i višak kapaciteta koji drugi ne koriste. Sistem obezbeđuje strogu izolaciju resursa i limite koji sprečavaju neproporcionalno korišćenje od strane pojedinačnih aplikacija ili korisnika, čime se garantuje stabilnost sistema. Osnovna apstrakcija su redovi zadataka (queues) organizovani hijerarhijski, što osigurava da se slobodni resursi prvo dele unutar organizacije pre nego što postanu dostupni drugima.
 
-- **Apache Ranger i Apache Sentry** – alati za centralizovanu autorizaciju i upravljanje politikama pristupa podacima i servisima u Hadoop ekosistemu. Apache Ranger omogućava fino-granulisanu kontrolu pristupa, audit logovanje i praćenje aktivnosti u realnom vremenu, dok je Apache Sentry starije rešenje sa fokusom na role-based pristup, koje se danas sve ređe koristi u novim implementacijama.
+- **Apache Ranger** –
+	- Apache Ranger je open-source framework za upravljanje, praćenje i nadzor bezbednosti podataka na Hadoop platformi. Pruža centralizovano upravljanje bezbednosnim politikama i detaljnu reviziju korisničkog pristupa.
+	- **Ključne funkcionalnosti**
+		- Centralizovana administracija – upravljanje bezbednošću kroz centralni UI ili REST API
+		- Centralizovana revizija – praćenje korisničkog pristupa i administrativnih akcija u Hadoop ekosistemu (HDFS, Hive, HBase, Storm, Knox, Solr, Kafka i drugi)
+		- Dinamička evaluacija politika – bezbednosne politike se prosleđuju Hadoop komponentama za izvršavanje
+	- **Arhitektura** (tri glavne komponente) 
+		- Ranger Admin – centralizovano upravljanje politikama
+		- Ranger Usersync – sinhronizacija sa LDAP/AD
+		- Ranger Key Management Service – upravljanje ključevima za enkripciju u HDFS-u
+	- Apache Ranger je idealan za kompleksne arhitekture jer pokriva prevenciju curenja podataka, bezbedno deljenje, kontrolu pristupa, enkripciju i upravljanje ključevima.
 
-- **Apache Knox** – igurnosni gateway i reverse proxy koji predstavlja jedinstvenu ulaznu tačku za spoljne klijente. Knox štiti Hadoop klaster od direktne izloženosti mreži, primenjuje autentifikaciju i autorizaciju na nivou API-ja i omogućava bezbedan pristup servisima bez otkrivanja interne arhitekture klastera.
+- **Apache Knox** 
+	- Sigurnosni gateway i reverse proxy koji predstavlja jedinstvenu ulaznu tačku za spoljne klijente. Knox štiti Hadoop klaster od direktne izloženosti mreži, primenjuje autentifikaciju i autorizaciju na nivou API-ja i omogućava bezbedan pristup servisima bez otkrivanja interne arhitekture klastera. 
+	
+	- **Ključne funkcionalnosti**
+		- Autentifikacija i potvrda identiteta
+		- Primena autorizacije
+		- Revizija na nivou servisa
+	
+	- Primarna funkcija Knox-a je obezbeđivanje sigurnog pristupa Hadoop klasterima kroz autentifikaciju, potvrdu identiteta, autorizaciju i reviziju na nivou servisa.
+
