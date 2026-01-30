@@ -12,9 +12,7 @@ Modelovanje relacija između entiteta se u MongoDB-u izvodi na dva načina:
 - Reference: Povezivanje dokumenata putem jedinstvenih identifikatora (_id), što je pogodno za velike skupove podataka i sprečavanje prekomernog dupliranja.
 
 ## Arhitektura
-<img width="462" height="488" alt="The-simplified-system-architecture-of-MongoDB-with-Mongoose" src="https://github.com/user-attachments/assets/135ce841-9896-4556-9693-62bf22b86090" />
-
-<img width="650" height="620" alt="MongoDB-Architecture" src="https://github.com/user-attachments/assets/e08ce748-dc7d-476c-b05f-69a3a66afd24" />
+<img width="1366" height="788" alt="sharding-and-replica-sets" src="https://github.com/user-attachments/assets/12fe0bfc-42f0-4abe-9cf6-3ff9a199847d" />
 
 Arhitektura MongoDB-a je dizajnirana da podrži visoku dostupnost i horizontalno skaliranje, uz oslanjanje na efikasne mehanizme za upravljanje memorijom i upitima. Sastoji se od nekoliko osnovnih komponenti koje zajednički omogućavaju efikasno skladištenje, preuzimanje i obradu podataka.
 
@@ -45,3 +43,7 @@ Povezivanje sa MongoDB-om se vrši putem zvaničnog `mongo-go-driver` paketa:
 
 ## Reference
 - [Geeks for Geeks](https://www.geeksforgeeks.org/mongodb/mongodb-architecture/)
+- [GitHub](https://github.com/minhhungit/mongodb-cluster-docker-compose?tab=readme-ov-file)
+- [Hello Interview](https://www.hellointerview.com/learn/system-design/in-a-hurry/key-technologies)
+- [ChatGPT](https://chatgpt.com/share/696bac70-8ff4-8002-bd99-f380f831fbdb)
+- [Hello Interview](https://www.hellointerview.com/learn/system-design/core-concepts/sharding)
