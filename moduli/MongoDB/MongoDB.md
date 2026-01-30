@@ -35,7 +35,6 @@ U okviru Smart Mobility sistema, MongoDB služi kao primarno skladište podataka
 - Users DB: Čuva profile korisnika
 - Travel History DB: Skladišti istoriju putovanja, različiti tipovi transporta (bus, taxi, bike) mogu imati različite atribute, lako se rešava kroz fleksibilnu šemu.
 
-### Implementacija (Golang, Gin)
 Povezivanje sa MongoDB-om se vrši putem zvaničnog `mongo-go-driver` paketa:
 - Connection Pooling: Drajver održava kolekciju konekcija ka klasteru, čime se optimizuje broj otvorenih soketa prema mongod procesima.
 - BSON Mapping: Go strukture (structs) koriste tagove (npr. bson:"name") kako bi se podaci automatski mapirali iz baze u objekte unutar Gin hendlera.
