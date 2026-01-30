@@ -47,7 +47,16 @@ Novije verzije Kafke uvode KRaft protokol koji eliminiše potrebu za ZooKeeper-o
 ### Producer-i i Consumer-i
 Producer-i su aplikacije koje generišu podatke i šalju ih u Kafku. Oni su "pametni" jer sami odlučuju u koju će particiju poslati podatak (obično na osnovu ključa), čime se osigurava da svi povezani događaji zavrse na istom mestu. S druge strane, consumer-i su aplikacije koje povlače te podatke. Oni su organizovani u Consumer Groups, gde više instanci deli posao čitanja iz jednog topika tako da svaka instanca dobije svoj deo particija, što sprečava dupliranje posla i omogućava ogromnu brzinu obrade.
 
+## Bezbednost 
+- Enkripcija u prenosu (TLS/SSL): Sva komunikacija između tvojih producer-a i Kafka klastera, kao i interna komunikacija između samih brokera, mora biti enkriptovana pomoću TLS protokola. Ovo sprečava presretanje osetljivih podataka dok putuju mrežom (MITM napadi).
+- Autentifikacija (SASL): Kafka koristi SASL mehanizam (Simple Authentication and Security Layer) kako bi osigurala da samo provereni servisi mogu da se povežu na klaster. 
+- Autorizacija (ACL - Access Control Lists): Cak i kada je servis autentifikovan, on ne sme imati pristup svim podacima. Kroz ACL pravila definiše se stroga kontrola pristupa i operacija.
 
+## Primena Kafke u arhitekturi sistema
+U okviru Smart Mobility rešenja, Kafka služi kao centralni komunikacioni sloj koji povezuje baze podataka sa podsistemom za analitike. Služi kao konekcija visokih performansi za prenos događaja iz MongoDB baza podataka ka Hadoop klasteru i namenskom servisu za analitiku.
+- Povlačenje podataka (MongoDB -> Kafka): Koristi se mehanizam koji prati svaku promenu (Insert/Update) u Users DB i Travel History DB. Ovi događaji se u realnom vremenu strimuju u Kafkine topike, čime se obezbeđuje da podaci budu odmah dostupni za dalju obradu bez dodatnog opterećenja primarnih baza.
+- Baferovanje i Transport: Kafka ovde služi kao bafer koji nivelise razlike u brzini između MongoDB-a i Hadoop-a. Čak i u slučajevima kada Hadoop klaster vrši kompleksne Batch operacije ili je privremeno nedostupan, Kafka zadržava podatke u particijama, garantujući da nijedan događaj neće biti izgubljen.
+- Skladištenje i Arhiviranje (Kafka -> Hadoop): Podaci iz Kafkinih topika se periodično upisuju u HDFS (Hadoop Distributed File System). 
 
 ## Reference
 - [Hello Interview](https://www.hellointerview.com/learn/system-design/deep-dives/kafka)
