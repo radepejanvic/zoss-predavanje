@@ -20,3 +20,6 @@ Zahvaljujući svojoj robusnosti, Kafka se najčešće primenjuje u sledećim sce
 - Decoupling: Producer-i i consumer-i su potpuno nezavisni. Producer ne mora da zna ko čita podatke, niti koliko consumer-a postoji, što olakšava skaliranje sistema.
 - Trajnost i pouzdanost: Podaci su nepromenljivi (immutable) i zapisuju se sekvencijalno na disk. Sekvencijalni upis je drastično brži od nasumičnog, što omogućava Kafki da postigne milionske propusne opsege uz minimalnu latenciju.
 - Garantovan redosled: Kafka garantuje redosled poruka unutar jedne particije. 
+
+## Arhitektura
+<img width="676" height="444" alt="Kafka-architecture" src="https://github.com/user-attachments/assets/2d1a1f49-175a-44c1-9f9a-3f30406d2688" />
