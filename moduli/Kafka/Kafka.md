@@ -2,7 +2,7 @@
 ## Uvod 
 Apache Kafka je distribuisana platforma za strimovanje podataka u realnom vremenu, dizajnirana za izgradnju brzih i otpornih tokova podataka (data pipelines). Za razliku od tradicionalnih sistema za razmenu poruka, Kafka funkcioniše kao distribuirani log-fajl koji garantuje visok propusni opseg (high throughput), nisku latenciju i horizontalnu skalabilnost.
 
-Osnovni koncept leži u Publish-Subscribe modelu:
+U osnovni Kafka se zasniva na Publish-Subscribe modelu:
 - Producers: Aplikacije koje šalju (objavljuju) podatke u Kafku.
 - Consumers: Aplikacije koje se pretplate na određene kanale i čitaju podatke.
 - Topics: Logički kanali ili kategorije u koje se poruke raspoređuju. Svaki topic je podeljen na particije radi paralelizacije rada.
