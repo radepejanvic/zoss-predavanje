@@ -24,11 +24,30 @@ Terminologija vezana za MongoDB:
 - Mongos (Query router): Služi kao ruter koji prosleđuje zahteve klijenata ka odgovarajućem šardu na osnovu ključa.
 - Replica Sets: Grupa servera koji održavaju identičan skup podataka kako bi se obezbedila redundansa i automatski oporavak u slučaju otkaza (failover).
 
-### Jezgro sistema i upravljanje (mongod & mongosh)
-MongoDB arhitektura se oslanja na specifične procese i alate koji omogućavaju rad baze i interakciju sa podacima:
-- MongoDB Server (mongod): Centralni proces (daemon) koji predstavlja srce sistema. Njegove odgovornosti su skladištenje podataka, upravljanje pristupom i izvršavanje svih operacija nad bazom.
-- MongoDB Shell (mongosh): Interaktivni JavaScript interfejs (CLI) koji omogućava administratorima i developerima da direktno upravljaju bazom, vrše upite i održavaju sistem.
-- Cluster formacija: Više mongod instanci se može povezati u klaster, čime se postiže distribucija podataka i otpornost na otkaze.
+### MongoDB Server (mongod)
+mongod je primarni sistemski proces (daemon) koji upravlja svim kritičnim aspektima baze podataka. Njegova glavna uloga je direktna interakcija sa Storage Engine slojem kako bi se osiguralo da su BSON dokumenti pravilno zapisani na disk ili pročitani iz memorije. Pored samog skladištenja, ovaj proces je odgovoran za sprovođenje sigurnosnih polisa, upravljanje indeksima i obradu svih dolaznih zahteva od strane klijentskih aplikacija.
+
+### MongoDB Shell (mongosh)
+mongosh predstavlja interaktivni JavaScript interfejs koji služi kao primarni alat za administraciju i brzu manipulaciju podacima direktno iz komandne linije. Za razliku od aplikativnih drajvera, shell omogućava testiranje kompleksnih upita u realnom vremenu, menjanje konfiguracije baze u hodu ili inspekciju indeksa bez potrebe za pisanjem eksternog koda.
+
+### Cluster formacija
+U produkcionim okruženjima, MongoDB se retko koristi kao jedna instanca; umesto toga, više mongod procesa se povezuje u klaster kako bi se osigurala visoka dostupnost i horizontalno skaliranje. Klaster formacija omogućava sistemu da nastavi sa radom čak i ako dođe do fizičkog otkaza jednog ili više servera, koristeći mehanizam automatskog prebacivanja na ispravne čvorove (failover) unutar Replica Setova. Osim otpornosti na otkaze, klaster omogućava distribuciju ogromnih količina podataka kroz Sharding proces. Na ovaj način, opterećenje upita se deli između više mašina, što sprečava da jedan server postane usko grlo. 
+
+### Klijentske biblioteke (Drivers)
+Drajveri predstavljaju komunikacioni sloj koji omogućava aplikacijama napisanom u različitim jezicima da razgovaraju sa MongoDB serverom. Njihova primarna uloga je serijalizacija i deserijalizacija podataka, odnosno prevođenje izvornih programskih struktura u BSON format koji baza razume i obrnuto. 
+
+Pored same konverzije podataka, drajveri upravljaju i kompleksnim mrežnim operacijama kao što je održavanje kolekcije konekcija (connection pooling) i automatsko rutiranje upita ka odgovarajućim čvorovima u klasteru. Oni su svesni topologije klastera, pa ako jedan čvor otkaže, drajver će automatski preusmeriti zahtev na drugu dostupnu repliku, čime se osigurava neometan rad aplikacije bez potrebe za ručnom rekonfiguracijom koda.
+
+### Mehanizam za skladištenje (Storage Engine)
+Storage Engine je unutrašnja komponenta MongoDB-a zadužena za direktno upravljanje načinom na koji se podaci čuvaju na fizičkom disku ili u RAM memoriji. On deluje kao posrednik između mongod procesa i memorijskog podsistema, a od njegove konfiguracije direktno zavise performanse čitanja i pisanja, kao i efikasnost kompresije podataka. MongoDB je jedinstven po tome što podržava promenu mehanizma skladištenja u zavisnosti od potreba aplikacije, što omogućava optimizaciju baze za različite scenarije upotrebe.
+
+Podrazumevani mehanizam od verzije 3.0 je WiredTiger, koji je dizajniran za sisteme sa visokim intenzitetom upisa podataka. On koristi napredne tehnike poput document-level zaključavanja, što omogućava da više korisnika istovremeno menja različite dokumente u istoj kolekciji bez blokiranja sistema. Pored toga, WiredTiger nudi efikasnu kompresiju koja može smanjiti zauzeće diska i do 80%, dok istovremeno koristi keširanje u memoriji kako bi obezbedio brzinu pristupa najčešće korišćenim podacima koja se meri u milisekundama.
+
+### Bezbednost 
+MongoDB pruža višeslojni sigurnosni model za zaštitu podataka u sistemu:
+- Autentifikacija: Provera identiteta korisnika i servisa pre pristupa bazi.
+- Autorizacija (RBAC): Dodela specifičnih rola korisnicima, osiguravajući da svaki servis pristupa samo onim podacima koji su mu neophodni.
+- Enkripcija: Podrška za TLS/SSL protokole za zaštitu podataka u tranzitu i enkripcija podataka na samom disku (at rest).
 
 ## Primena MongoDB-a u arhitekturi sistema
 U okviru Smart Mobility sistema, MongoDB služi kao primarno skladište podataka.
