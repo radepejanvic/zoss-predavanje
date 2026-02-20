@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Test scripts
+test_scripts/
+
+# Documentation
+*.md
+COMPARISON.md
+QUICKSTART*.ps1
+
+# Go
+*.exe
+*.test
+*.out
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

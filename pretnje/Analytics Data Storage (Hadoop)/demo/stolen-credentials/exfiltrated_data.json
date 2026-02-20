@@ -1,0 +1,122 @@
+[
+  {
+    "travel_id": "TRV-2026-001",
+    "user_id": "user_12345",
+    "username": "marko.petrovic",
+    "origin": {
+      "city": "Belgrade",
+      "lat": 44.7866,
+      "lon": 20.4489
+    },
+    "destination": {
+      "city": "Novi Sad",
+      "lat": 45.2671,
+      "lon": 19.8335
+    },
+    "departure_time": "2026-02-15T08:30:00Z",
+    "arrival_time": "2026-02-15T09:45:00Z",
+    "transport_mode": "bus",
+    "cost_eur": 5.5,
+    "payment_method": "credit_card"
+  },
+  {
+    "travel_id": "TRV-2026-002",
+    "user_id": "user_67890",
+    "username": "ana.jovanovic",
+    "origin": {
+      "city": "Nis",
+      "lat": 43.3209,
+      "lon": 21.8958
+    },
+    "destination": {
+      "city": "Belgrade",
+      "lat": 44.7866,
+      "lon": 20.4489
+    },
+    "departure_time": "2026-02-16T14:00:00Z",
+    "arrival_time": "2026-02-16T17:30:00Z",
+    "transport_mode": "train",
+    "cost_eur": 12.0,
+    "payment_method": "cash"
+  },
+  {
+    "travel_id": "TRV-2026-003",
+    "user_id": "user_11223",
+    "username": "stefan.nikolic",
+    "origin": {
+      "city": "Kragujevac",
+      "lat": 44.0125,
+      "lon": 20.9114
+    },
+    "destination": {
+      "city": "Nis",
+      "lat": 43.3209,
+      "lon": 21.8958
+    },
+    "departure_time": "2026-02-17T10:15:00Z",
+    "arrival_time": "2026-02-17T12:00:00Z",
+    "transport_mode": "carshare",
+    "cost_eur": 8.0,
+    "payment_method": "mobile_wallet"
+  },
+  {
+    "travel_id": "TRV-2026-004",
+    "user_id": "user_44556",
+    "username": "jovana.stojanovic",
+    "origin": {
+      "city": "Subotica",
+      "lat": 46.1005,
+      "lon": 19.6672
+    },
+    "destination": {
+      "city": "Belgrade",
+      "lat": 44.7866,
+      "lon": 20.4489
+    },
+    "departure_time": "2026-02-18T06:00:00Z",
+    "arrival_time": "2026-02-18T08:30:00Z",
+    "transport_mode": "bus",
+    "cost_eur": 9.5,
+    "payment_method": "credit_card"
+  },
+  {
+    "travel_id": "TRV-2026-005",
+    "user_id": "user_78901",
+    "username": "milan.djordjevic",
+    "origin": {
+      "city": "Novi Sad",
+      "lat": 45.2671,
+      "lon": 19.8335
+    },
+    "destination": {
+      "city": "Kragujevac",
+      "lat": 44.0125,
+      "lon": 20.9114
+    },
+    "departure_time": "2026-02-19T12:00:00Z",
+    "arrival_time": "2026-02-19T14:15:00Z",
+    "transport_mode": "train",
+    "cost_eur": 7.0,
+    "payment_method": "credit_card"
+  },
+  {
+    "travel_id": "TRV-2026-006",
+    "user_id": "user_23456",
+    "username": "katarina.ilic",
+    "origin": {
+      "city": "Belgrade",
+      "lat": 44.7866,
+      "lon": 20.4489
+    },
+    "destination": {
+      "city": "Subotica",
+      "lat": 46.1005,
+      "lon": 19.6672
+    },
+    "departure_time": "2026-02-19T15:30:00Z",
+    "arrival_time": "2026-02-19T18:00:00Z",
+    "transport_mode": "carshare",
+    "cost_eur": 11.0,
+    "payment_method": "mobile_wallet"
+  }
+]
