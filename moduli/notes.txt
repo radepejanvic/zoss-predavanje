@@ -1,0 +1,262 @@
+>> REDIS: 
+    - self-described data structure store 
+        - no external schema 
+        - each stored value includes metadata about its type
+    - written in C
+    - in-memory - not for durability focused systems
+        - AOF (append only file) - logs every write command to a file 
+        - disabled by default - efficiency over durability
+    - single threaded
+    
+    >> STORING DATA: 
+        - fundamental data structs: 
+            - strings
+            - hashes (objects/dictionaries)
+            - lists
+            - maps 
+            - sorted sets (priority queues)
+            - bloom filters
+            - geospatial indexes 
+            - time series
+        - communication patterns: 
+            - Pub/Sub 
+            - Streams
+        - key-value store
+            - keys - strings
+            - values - any supported data type
+            - all objects have a key
+    
+    >> INFRASTRUCTURE PATTERNS:
+        - single node 
+            - one instance that holds the whole dataset
+        - high availability (HA) replica 
+            - primary instance 
+            - one or more replicas that maintain the copies of the primary's data via the asynchronous replication 
+        - cluster 
+            - multiple instances that partition (shard) the keyspace
+            - each node holds the subset of the global data
+            - clients cache a set of hash slots which map a set of keys to a specific node
+            - each node maintains some awareness of other nodes via a gossip protocol 
+    
+    >> SCALING: 
+        - scales by key names and structures 
+        - grouping related data with namespaces
+            - `user:123:profile`
+            - `user:124:profile` 
+        - keys determines which node stores the data (hash slots)
+        - hot keys or uneven distribution - result of poor key design
+        - easier eviction and expiration 
+        - bad key structure: 
+            - `"user123":json-blob-with-profile-posts-settings`
+            - `"user124":json-blob-with-profile-posts-settings`
+            - every read/write fetches the whole blob
+            - hard to update or expire parts of data independently 
+            - large blobs can cause memory and network bottlenecks
+        - good key structure: 
+            - `"user:123:profile":hash-of-profile-fields`
+            - `"user:123:posts":list-of-posts`
+            - `"user:123:settings":hash-of-settings`
+            - fetch and update only what you need
+            - supports atomic operations on each data type
+            - keys grouped logically in a cluster
+
+    >> COMMON USAGES: 
+        - cache - often uses TTL 
+        - distributed lock with a timeout  
+            - shared counter
+            - atomic increment (INCR) with a TTL 
+            - INCR -> acquire lock
+            - if response == 1 -> lock acquired
+            - else response > 1 -> someone else acquired it first
+            - DEL -> free lock
+            - SET with HX and EX options -> safer than INCR and DEL (by documentation)
+        - leaderboards - sorted sets maintain data that can be queried in log time 
+        - rate limiting - fixed-window rate limiter
+            - N - number of requests per window
+            - W - time window duration
+            - INCR total_reqs -> when a new req comes
+            - if total_reqs > N -> block new request
+            - else -> let new req pass
+            - expire total_reqs after W time 
+            - possible to make sliding-window rate limiter
+        - proximity search - (native) geospatial indexes support
+        - event sourcing - (native) streams 
+            - append-only logs
+            - similar to Kafka   
+        - pub/sub - (native) message broadcasting
+            - channels 
+            - messages are not persisted
+            - simple & fast 
+            - not durable
+        
+    >> HOT KEY REMEDIATIONS: 
+        - in-memory cache in clients
+        - storing the same data in multiple keys and randomizing the requests spreading them across the cluster
+        - adding read replica inst`ances and dinamically scaling these with load
+
+>> MONGODB:
+    - document-oriented database
+    - open source
+    - implemented in C++
+    - soters data as documents
+    - uses BSON - binary JSON
+    - flexible schema - documents in the same collection can differ
+    - database > collection > document 
+    - document - single record
+        { 
+            "_id": ObjectID("..."), 
+            "name": "Bob", 
+            "email": "...",
+            ...
+        }
+    - collection - multiple documents - similar to table in relational dbs 
+    - schema-less - no rigid structure upfront
+    - structure can be enforced using schema validation 
+    - core concepts: 
+        - indexes
+        - replication 
+        - sharding
+    - indexes - default index is _id
+    - relations between entities: 
+        - embed - object in a object - when data is frequently accessed together and/or is small
+            {
+                "orderId": 1,
+                "items": [
+                    { "product": "Book", "price": 10 }
+                ]
+            }
+        - reference 
+            {
+                "userId": ObjectId("..."), 
+                "ordersId": [ObjectId("...")], 
+                ...
+            } 
+    - replication - provides high availability (HA)
+        - replica sets 
+        - one primary (original), multiple secondaries (replicas)
+        - automatic failover 
+    - sharding - horizontal scaling
+        - data split accross multiple servers 
+        - based on a shard key - decides where the data lives
+        - default shard key is _id 
+        - shard keys can be compound keys 
+    - transactions - support for ACID 
+
+>> SHARDING: 
+    - NoSQL databases support sharding by defualt
+    - Vitess and Citus open-source sharding layers for SQL databases
+    >> PARTITIONING vs. SHARDING: 
+        - partitioning - splitting data within a single db instance
+            - horizontal - divides rows between partitions (one partitions per year of orders) 
+            - vertical - divides columns betweeen partitions (frequently accessed columns in one and rarely accessed or large columns in the other)
+        - sharding - splitting data across multiple machines
+            - horizontal partitioning accross multiple instances
+    
+    >> HOW TO SHARD: 
+        - what to shard by - defines how the data is grouped (shard key)
+        - how to distribute it - mapping groups to shards (nodes)
+        
+        >> SHARD KEY: 
+            - tips for choosing a good shard key: 
+            - high cardinality - many unique values
+            - even distribution - values should spread evenly across shards
+            - aligns with queries - most common queries should ideally hit just one shard
+            - id - often good enough shard key 
+        
+        >> SHARDING STRATEGIES: 
+            - range-based sharding 
+                - groups records by a continious range of values
+                - assigns value ranges to shards 
+                - shard_1 -> user_id (1 - 1M)
+                - shard_2 -> user_id (1M - 2M)
+                - shard_3 -> user_id (2M - 3M)
+            - hash-based sharding (default)
+                - uses a hash function distribute records accross shards
+                - even distribution 
+                - shard_id = hash(user_id) % num_shards
+                - if sharding is done with modulo operator all of the previos data needs to be remaped and transpored when the number of shards gets increased
+                - solved by using consistent hashing 
+            - directory-based sharding
+                - uses a look up table to decide where each record lives
+                - user_15 -> shard_1
+                - user_87 -> shard_4
+                - user_204 -> shard_2
+                - flexibility 
+                - rebalancing load requires just updating the look up table 
+                - increased latency - each requests requires look up table check 
+    
+    >> CHALLENGES:  
+        - uneven load 
+        - queries that span multiple shards 
+        - maintaining consistency accross shards
+
+        >> UNEVEN LOAD:
+            - celebrity problem      
+            - isolate hot keys to a dedicated shard 
+                - Taylor Swift to a separate shard 
+                - directory-based good because it easily moves specific records between shards
+            - use commpound shard keys 
+                - hash(user_id + date) 
+                - distributes data of a single user across multiple shards 
+            - dynamic shard splitting
+                - MongoDB supports by default when a shard gets too hot
+
+        >> CROSS-SHARD OPERATIONS: 
+            - query multiple shards
+            - wait for them to respond 
+            - aggregate responses
+            - can't be eliminated but can be minimized
+            - results caching
+            - denormalization to keep related data together 
+            - accept the hit for rare queries - if it is rarely performed no need to optimize
+        
+        >> MAINTAINING CONSISTENCY: 
+            - 2pc could be a solution but is avoided 
+            - design to avoid cross-shard transactions
+                - best solution 
+                - if sharded by user_id keep all of their related data on the same shard (account balance, transaction history, profile info...)
+                - all of the transactions are single shard transactions 
+            - use sagas for multi-shard operations 
+                - break the operation into a sequence of independent reversable steps 
+                - each step must have a compensation action (undo)
+                - if step 3 fails, run compensation actions for step 2 and 1
+                - eventual consistency 
+                1) deduct money from user A's account (shard 1)
+                2) add money to user B's account (shard 2)
+                3) if step 2 fails, refund user A (undo)
+            - accept eventual consistency 
+
+>> KAFKA:   
+    // TODO: 
+
+>> CONSISTENT HASHING: 
+    // TODO: used for even sharding that supports adding new shards
+
+>> SAGA PATTERN: 
+    // TODO: used for reaching multishard consistency  
+
+>> CONCEPTS: 
+    - wire protocol - way of getting data from point to point
+        - common way of exchanging data on application level 
+        - refers to application layer communication protocols
+    - hot key issue - a few specific data keys recieve disproportionately high volume of requests overwhelming the node server handling them 
+    - failover - automatic process of switching to a redundant or standby system when the primary system fails  
+    - 2pc - 2 phase commit  
+        - phase 1 (voting phase) - prepare 
+            - coordinator sends a "prepare" request to all participants
+            - participants perform their part of the transaction and vote "yes" or "no"
+        - phase 2 (decision phase) - commit/abort
+            - coordinator collects the votes
+            - coordinator sends "commit" if all voted "yes"
+            - coordinator sends "abort" if any voted "no"
+            - participants execute the command given 
+
+>> SOURCES: 
+    - [Redis](https://www.hellointerview.com/learn/system-design/deep-dives/redis)
+    - [Redis](https://redis.io/docs/latest/)
+    - [MongoDB](https://chatgpt.com/share/696bac70-8ff4-8002-bd99-f380f831fbdb)
+    - [Kafka](https://www.hellointerview.com/learn/system-design/deep-dives/kafka)
+    - [Kafka](https://www.youtube.com/watch?v=_5mu7lZz5X4&t=13s)
+    - [Sharding](https://www.hellointerview.com/learn/system-design/core-concepts/sharding)
+    - [Consistent Hashing](https://www.hellointerview.com/learn/system-design/core-concepts/consistent-hashing)
+    - [Saga Pattern](https://www.geeksforgeeks.org/system-design/saga-design-pattern/)
