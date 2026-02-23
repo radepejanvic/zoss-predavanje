@@ -65,8 +65,46 @@ total_blocking_keys_on_nokey:0
 
 <img width="1100" height="489" alt="image" src="https://github.com/user-attachments/assets/046720c6-e063-4956-b3e7-a21b288dcc71" />
 
+#### Demonstracija napada
+📍 **[GitHub - Redis NoAuth DoS](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
+
 #### Mitigacije
 - Ažuriranje na bezbednu verziju: Instalacija zakrpe za Redis koja limitira resurse dodeljene neautentifikovanim klijentima.
 - Client Output Buffer Limits: Konfigurisanje client-output-buffer-limit u `redis.conf` za normal klijente kako bi Redis automatski prekinuo konekciju koja puni memoriju.
 - Mrežna zaštita (ACL & Firewall): Dozvoliti pristup Redis portu isključivo unutar interne Docker mreže za Route Planning Service.
 - Rate Limiting na mrežnom nivou: Ograničiti broj novih konekcija po sekundi sa jedne IP adrese.
+
+### 2) Redis Remote Code Execution (RCE) via Lua Scripting (CVE-2025-49844)
+#### Resursi i operativni procesi pod rizikom:
+- Integritet sistema i poverljivost: Za razliku od DoS napada, RCE omogućava napadaču da izvršava proizvoljne komande na operativnom sistemu gde se Redis nalazi. To znači mogućnost brisanja svih keširanih ruta ili krađu osetljivih sesija putnika ili podataka putnika u servisima koji keširaju te podatke (Subscriptions & Tickets Service).
+- Kontaminacija lanca snabdevanja podacima: Napadač može trajno modifikovati logiku Route Planning Service-a ubacivanjem zlonamernog koda, što bi dovelo do toga da aplikacija mesecima servira pogrešne informacije bez vidljivog pada sistema.
+- Infrastrukturna bezbednost: Kompromitovan Redis kontejner može poslužiti kao odskočna daska (pivot) za napad na ostatak mikroservisne arhitekture, uključujući baze sa ličnim podacima korisnika.
+
+#### Provera prisustva ranjivosti
+- Ranjivost se nalazi u načinu na koji određene verzije Redisa rukuju Lua skriptama (sandbox bypass). Provera se vrši testiranjem verzije i pokušajem izvršavanja ograničenih sistemskih poziva kroz EVAL komandu:
+
+```shell
+# Provera verzije baze
+redis-cli INFO Server | grep redis_version
+```
+
+- Ukoliko je verzija podložna bagu u Lua interpretatoru, napadač može zaobići sigurnosna ograničenja.
+
+#### Napad
+- Scenario: Potpuna kompromitacija Route Planning čvora
+- Napadač koristi [Python skriptu](https://github.com/raminfp/redis_exploit/blob/main/exploit_poc.py) koja zloupotrebljava Lua engine unutar Redisa.
+- Mehanizam: Skripta šalje specifično konstruisanu Lua skriptu koja koristi propust u memoriji (buffer overflow ili sandbox escape) kako bi izašla iz izolovanog okruženja Redisa i pristupila shell-u operativnog sistema.
+- Rezultat: Napadač dobija "Reverse Shell".
+- Napadač unutar `redis-cache` kontejnera može:
+  - Čitati Configs fajlove koji sadrže API ključeve za Mobility provajdere.
+  - Presretati saobraćaj između Route Planning Service-a i Redisa.
+  - Instalirati ransomware koji bi kriptovao ceo keš.
+
+#### Mitigacije
+- Onemogućavanje opasnih komandi: U `redis.conf` fajlu koristiti `rename-command` da se potpuno onemoguće ili preimenuju komande EVAL, SCRIPT i CONFIG za korisnike koji nisu administratori.
+- Principle of Least Privilege: Pokretati Redis proces pod korisnikom sa minimalnim privilegijama koji nema pristup `/bin/sh` ili drugim sistemskim alatima.
+- AppArmor/SELinux profili: Koristiti bezbednosne profile za Docker kontejnere koji sprečavaju procese unutar kontejnera da vrše sistemske pozive koji nisu neophodni za rad baze.
+- Redovan patching: S obzirom na to da je ovo kritičan CVE, neophodno je koristiti isključivo zvanične "hardened" slike Redisa koje imaju ugrađene zakrpe za Lua engine.
+
+#### Demonstracija napada
+📍 **[GitHub - Redis RCE via Lua Scripting](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
