@@ -109,3 +109,23 @@ redis-cli INFO Server | grep redis_version
 - AppArmor/SELinux profili: Koristiti bezbednosne profile za Docker kontejnere koji sprečavaju procese unutar kontejnera da vrše sistemske pozive koji nisu neophodni za rad baze.
 - Redovan patching: S obzirom na to da je ovo kritičan CVE, neophodno je koristiti isključivo zvanične "hardened" slike Redisa koje imaju ugrađene zakrpe za Lua engine.
 
+### 3) Sensitive Information Leak via MongoDB Driver (CVE-2021-32050) 
+#### Resursi i operativni procesi pod rizikom:
+- Poverljivost administrativnih kredencijala: Najveći rizik je curenje lozinki ili API ključeva koji se koriste za povezivanje Subscriptions Service-a sa bazom. Ako ovi podaci iscure, napadač dobija pun administrativni pristup bazi podataka.
+- Kompromitacija platnih podataka: Kroz pristup logovima koji sadrže presretnute komande, napadač može videti detalje transakcija iz payment_history kolekcije pre nego što oni budu propisno obrađeni ili anonimizovani.
+- Gubitak poverenja u bezbednost logova: Logovi, koji bi trebali služiti za debagovanje i reviziju, postaju bezbednosni teret koji može sadržati saslStart ili saslContinue pakete sa osetljivim parametrima.
+
+#### Provera prisustva ranjivosti
+Ranjivost je prisutna ako servis koristi starije verzije drajvera (C, Node.js, PHP, Swift) i ako je u kodu eksplicitno uključen command listener za monitoring performansi ili debagovanje.
+
+#### Napad
+- Scenario: Krađa kredencijala iz centralizovanog sistema za logovanje
+- Napadač ne napada bazu direktno, već cilja infrastrukturu za logovanje (npr. pogrešno konfigurisan ELK stack ili javno dostupni log fajlovi na serveru).
+- Mehanizam: Programer je uključio "command listener" kako bi pratio latenciju upita u Subscriptions servisu. Zbog greške u drajveru, prilikom procesa autentifikacije servisa na MongoDB, drajver u logove upisuje kompletan sadržaj komandi koje sadrže kredencijale.
+- Rezultat: Napadač čita logove i pronalazi osetljive podatke. Sa tim kredencijalima, napadač se može autentifikovati kao SubscriptionsServiceUser i dobiti pristup svim JMBG podacima korisnika, istoriji kupovina i zonama kretanja, čime se vrši masovna povreda GDPR-a.
+
+#### Mitigacije
+- Ažuriranje drajvera (Patching): Odmah ažurirati MongoDB drajvere na sigurne verzije (npr. C drajver na 1.17.7+, Node.js na 4.17.0+).
+- Isključivanje listener-a: U produkcionom okruženju, command listener ne bi smeo biti uključen osim ako je to neophodno za specifičnu dijagnostiku, i tada samo uz strogu kontrolu pristupa logovima.
+- Log Redaction: Implementirati sisteme za automatsko maskiranje osetljivih ključnih reči (npr. password, token, sasl) u okviru infrastrukture za logovanje pre nego što logovi budu trajno uskladišteni.
+
