@@ -295,7 +295,7 @@ Ranjivost nastaje kada Subscription Service prima filtere od korisnika (obično 
 - Napadač dobija uvid u tuđe paypal_email adrese, brojeve bankovnih računa (bank_account) i transaction_id.
 
 #### Demonstracija napada
-📍 **[GitHub - Mongobleed Demo](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
+📍 **[GitHub - MongoDB NoSQL Injection](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
 
 #### Mitigacije
 - Strogo tipiziranje (Schema Binding): Ne dozvoliti direktno bind-ovanje filtera u `bson.M.` Koristiti fiksne strukture u Go-u gde je UserID isključivo tipa string.
