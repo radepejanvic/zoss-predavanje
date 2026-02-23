@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  mongodb-subscriptions:
+    image: mongo:8.2.2
+    container_name: mongodb-subscriptions
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: subscriptions_db
+    volumes:
+      - ./subscription-service/init-data:/docker-entrypoint-initdb.d/
+      - mongodb_subscriptions_data:/data/db
+    command: mongod --bind_ip 0.0.0.0
+
+  mongodb-routes:
+    image: mongo:8.2.3
+    container_name: mongodb-routes
+    # ports:
+    #   - "30002:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: routes_db
+    volumes:
+      - ./routes-service/init-data:/docker-entrypoint-initdb.d/
+      - mongodb_routes_data:/data/db
+    command: mongod --bind_ip 0.0.0.0
+    networks:
+      - internal-network
+
+  redis-cache:
+    image: redis:7.2.7
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --requirepass SuperSecretPassword123
+      --loglevel debug
+      --protected-mode yes
+      --client-output-buffer-limit normal 0 0 0
+    networks:
+      - internal-network
+
+  routes-service:
+    build: ./services/routes-service
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGO_URI=mongodb://admin:admin@mongodb-routes:27017/?authSource=admin
+      - REDIS_HOST=redis-cache:6379
+      - REDIS_PASSWORD=SuperSecretPassword123
+    depends_on:
+      - redis-cache
+    networks: 
+      - internal-network
+
+networks:
+  internal-network:
+    driver: bridge
+
+volumes:
+  mongodb_subscriptions_data:
+  mongodb_routes_data:

@@ -1,0 +1,20 @@
+meta {
+  name: Get My Subscriptions
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:8080/my-subscriptions?filter={"user_id":"USR001"}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  filter: {"user_id":"USR001"}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

