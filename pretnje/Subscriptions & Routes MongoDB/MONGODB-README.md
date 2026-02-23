@@ -99,7 +99,8 @@ Rade@Yoga D:\fax\MAS\ZOSS\zoss-predavanje\mongobleed-demo ( main): py .\mongo
 ```
 
 #### Demonstracija napada
-📍 **[GitHub - Mongobleed Demo](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
+📍 **[GitHub - Mongobleed Demo](https://github.com/radepejanvic/zoss-predavanje/pretnje/Subscriptions & Routes MongoDB
+/demos/endpoint-tests/NoSQL Injection.bru)**
 
 #### Mitigacije
 - Ažuriranje baze: Odmah preći na verziju MongoDB-a u kojoj je **CVE-2025-14847** otklonjen.
