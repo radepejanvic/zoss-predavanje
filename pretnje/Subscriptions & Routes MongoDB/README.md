@@ -98,6 +98,9 @@ Rade@Yoga D:\fax\MAS\ZOSS\zoss-predavanje\mongobleed-demo ( main): py .\mongo
 [!] Found pattern: key
 ```
 
+#### Demonstracija napada
+📍 **[GitHub - Mongobleed Demo](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
+
 #### Mitigacije
 - Ažuriranje baze: Odmah preći na verziju MongoDB-a u kojoj je **CVE-2025-14847** otklonjen.
 - Onemogućavanje zlib kompresije: Ako ažuriranje nije moguće, u konfiguraciji onemogućiti `zlib` kao mrežni kompresor.
@@ -290,6 +293,9 @@ Ranjivost nastaje kada Subscription Service prima filtere od korisnika (obično 
 - Backend generiše MongoDB upit koji glasi: "Vrati sve zapise gde user_id nije null".
 - Sistem vraća pretplate korisnika `USR002`, `USR003`, `USR004`.
 - Napadač dobija uvid u tuđe paypal_email adrese, brojeve bankovnih računa (bank_account) i transaction_id.
+
+#### Demonstracija napada
+📍 **[GitHub - Mongobleed Demo](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
 
 #### Mitigacije
 - Strogo tipiziranje (Schema Binding): Ne dozvoliti direktno bind-ovanje filtera u `bson.M.` Koristiti fiksne strukture u Go-u gde je UserID isključivo tipa string.
