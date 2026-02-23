@@ -1,4 +1,4 @@
-# Pretnje, napadi i mitigacije na Subscriptions Database (MongoDB)
+# Pretnje, napadi i mitigacije na Subscriptions & Tickects Database (MongoDB)
 
 ## Uvod
 Ovaj dokument analizira sigurnosne pretnje servisa za pretplate i karte sa fokusom na bazu podataka MongoDB. Analizirane su dve kritične ranjivosti: jedna na nivou samog database engine-a (MongoBleed) i jedna na nivou aplikacione logike (NoSQL Injection).
@@ -16,26 +16,44 @@ Subscription & Ticket Management sistem koristi MongoDB (bazu `subscriptions_db`
 - Dostupnost i performanse: Indeksi nad user_id i status poljima su kritični za rad aplikacije u realnom vremenu.
 
 ## Katalog Napada
-1. **CVE-2025-14847: MongoDB Memory Leak (MongoBleed)**
-Pretnje (Resursi)
-Resursi pod rizikom:
+### 1) MongoDB Memory Leak - MongoBleed (CVE-2025-14847) 
+Ova ranjivost omogućava neautentifikovanom napadaču da daljinski "izvuče" (leak) sadržaj memorije MongoDB procesa. Problem nastaje u `zlib` biblioteci za kompresiju, unutar mrežnog sloja MongoDB-a, gde se zbog greške u rukovanju baferima mogu pročitati susedni delovi memorije koji nisu namenjeni klijentu.
 
-Sistemska memorija MongoDB servera.
+#### Resursi pod rizikom:
+- Sistemska memorija MongoDB servera.
+- Osetljivi podaci u memoriji (kredencijali, fragmenti logova, metapodaci baze).
 
-Osetljivi podaci u memoriji (kredencijali, fragmenti logova, metapodaci baze).
+#### Provera prisustva ranjivosti
+- Prvi korak je identifikacija verzije i provera mrežnog statusa servera:
+```shell
+docker exec -it mongodb mongosh -u admin -p admin --authenticationDatabase admin
 
-Ova ranjivost omogućava neautentifikovanom napadaču da daljinski "izvuče" (leak) sadržaj memorije MongoDB procesa. Problem nastaje u zlib kompresoru unutar mrežnog sloja MongoDB-a, gde se zbog greške u rukovanju baferima mogu pročitati susedni delovi memorije koji nisu namenjeni klijentu.
+# output
+Current Mongosh Log ID: 6997899cf47860ecf89dc29c
+Connecting to:          mongodb://<credentials>@127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&authSource=admin&appName=mongosh+2.5.9
+Using MongoDB:          8.2.2
+Using Mongosh:          2.5.9
+```
+- Spisak ranjivih verzija se nalazi na _Slici 1_
+<img width="3980" height="2643" alt="image" src="https://github.com/user-attachments/assets/78e35c77-6ed2-467f-b6bb-62b991f2ae2c" />
+_Slika 1_
 
-Provera prisustva ranjivosti
-Prvi korak je identifikacija verzije i provera mrežnog statusa servera:
-
-Shell
-# Provera verzije (Ranjive su verzije pre 8.x zakrpa ili specifični 8.2.2 build-ovi)
-Using MongoDB: 8.2.2
-
-# Provera postojanja zlib kompresora u server statusu
+- Provera da li je `zlib` biblioteka za kompresiju uključena
+```shell
 db.serverStatus().network
-Povratna vrednost koja sadrži zlib objekat sugeriše da je server konfigurisan sa ranjivim kompresorom.
+```
+- Povratna vrednost koja sadrži `zlib` objekat sugeriše da je server konfigurisan sa ranjivim kompresorom.
+```js
+// output
+{
+  // ...
+    zlib: { // postojanje zlib-a sugerise ranjivost na MongoBleed
+      compressor: { bytesIn: Long('0'), bytesOut: Long('0') },
+      decompressor: { bytesIn: Long('0'), bytesOut: Long('0') }
+    },
+ // ...
+}
+```
 
 Napadi
 Scenario: Izvlačenje osetljivih fragmenata iz memorije
