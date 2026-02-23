@@ -25,7 +25,9 @@ Ova ranjivost omogućava neautentifikovanom napadaču da daljinski "izvuče" (le
 
 #### Provera prisustva ranjivosti
 <img width="3980" height="2643" alt="image" src="https://github.com/user-attachments/assets/78e35c77-6ed2-467f-b6bb-62b991f2ae2c" />
+
 - Prvi korak je identifikacija verzije i provera mrežnog statusa servera:
+
 ```shell
 docker exec -it mongodb mongosh -u admin -p admin --authenticationDatabase admin
 
@@ -35,11 +37,15 @@ Connecting to:          mongodb://<credentials>@127.0.0.1:27017/?directConnectio
 Using MongoDB:          8.2.2
 Using Mongosh:          2.5.9
 ```
+
 - Provera da li je `zlib` biblioteka za kompresiju uključena
+
 ```shell
 db.serverStatus().network
 ```
+
 - Povratna vrednost koja sadrži `zlib` objekat sugeriše da je server konfigurisan sa ranjivim kompresorom.
+
 ```js
 // output
 {
@@ -51,6 +57,7 @@ db.serverStatus().network
  // ...
 }
 ```
+
 #### Napad
 - Scenario: Izvlačenje osetljivih fragmenata iz memorije
   - Napadač koristi specijalizovanu skriptu (mongobleed.py) koja šalje izmenjene mrežne pakete.
