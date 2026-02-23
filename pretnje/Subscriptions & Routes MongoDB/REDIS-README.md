@@ -61,6 +61,9 @@ clients_in_timeout_table:0
 total_blocking_keys:0
 total_blocking_keys_on_nokey:0
 ```
+<img width="1097" height="491" alt="image" src="https://github.com/user-attachments/assets/377c6b8f-b14d-4a8b-bb8c-d9e913473dfd" />
+
+<img width="1100" height="489" alt="image" src="https://github.com/user-attachments/assets/046720c6-e063-4956-b3e7-a21b288dcc71" />
 
 #### Mitigacije
 - Ažuriranje na bezbednu verziju: Instalacija zakrpe za Redis koja limitira resurse dodeljene neautentifikovanim klijentima.
