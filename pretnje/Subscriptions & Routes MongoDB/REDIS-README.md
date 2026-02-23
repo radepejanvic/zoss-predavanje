@@ -12,6 +12,10 @@ Route Planning Service koristi Redis za skladištenje izračunatih ruta kako bi 
 - Kritični resursi pod rizikom su dostupnost sistema i performanse, jer pad keša uzrokuje preopterećenje backend servisa.
 
 ## Katalog Napada
+### Stablo pretnji
+<img width="893" height="723" alt="image" src="https://github.com/user-attachments/assets/c34bb13d-2e1c-490c-9faa-c3d724a72589" />
+
+
 ### 1) Redis NOAUTH DoS - Resource Exhaustion (CVE-2025-21605)
 Ova ranjivost omogućava napadaču da pošalje veliki broj komandi koje zahtevaju autentifikaciju (npr. GET, AUTH, INFO), ali bez slanja ispravne lozinke. Iako Redis odbija ove komande sa NOAUTH greškom, on i dalje mora da obradi zahtev i smesti odgovor u izlazni bafer klijenta.
 
