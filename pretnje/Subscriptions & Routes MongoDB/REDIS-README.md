@@ -100,11 +100,12 @@ redis-cli INFO Server | grep redis_version
   - Presretati saobraćaj između Route Planning Service-a i Redisa.
   - Instalirati ransomware koji bi kriptovao ceo keš.
 
+#### Demonstracija napada
+📍 **[GitHub - Redis RCE via Lua Scripting](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
+
 #### Mitigacije
 - Onemogućavanje opasnih komandi: U `redis.conf` fajlu koristiti `rename-command` da se potpuno onemoguće ili preimenuju komande EVAL, SCRIPT i CONFIG za korisnike koji nisu administratori.
 - Principle of Least Privilege: Pokretati Redis proces pod korisnikom sa minimalnim privilegijama koji nema pristup `/bin/sh` ili drugim sistemskim alatima.
 - AppArmor/SELinux profili: Koristiti bezbednosne profile za Docker kontejnere koji sprečavaju procese unutar kontejnera da vrše sistemske pozive koji nisu neophodni za rad baze.
 - Redovan patching: S obzirom na to da je ovo kritičan CVE, neophodno je koristiti isključivo zvanične "hardened" slike Redisa koje imaju ugrađene zakrpe za Lua engine.
 
-#### Demonstracija napada
-📍 **[GitHub - Redis RCE via Lua Scripting](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
