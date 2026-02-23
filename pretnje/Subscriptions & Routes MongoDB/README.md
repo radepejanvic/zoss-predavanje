@@ -297,10 +297,10 @@ Ranjivost nastaje kada Subscription Service prima filtere od korisnika (obično 
 - Primenjivanje vlasništva u kodu: U handler-u uvek forsirati user_id izvučen iz JWT tokena:
 
 ```go
-// wrong
+// Pogrešno
 filter := c.Query("filter") 
 
-// right:
+// Ispravno
 userID, _ := c.Get("user_id") 
 finalFilter := bson.M{"user_id": userID} 
 ```
