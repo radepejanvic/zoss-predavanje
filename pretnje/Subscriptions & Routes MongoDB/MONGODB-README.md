@@ -16,6 +16,9 @@ Subscription & Ticket Management sistem koristi MongoDB (bazu `subscriptions_db`
 - Dostupnost i performanse: Indeksi nad user_id i status poljima su kritični za rad aplikacije u realnom vremenu.
 
 ## Katalog Napada
+### Stablo Pretnji
+<img width="1118" height="715" alt="image" src="https://github.com/user-attachments/assets/50fe6dbe-0b3d-46c5-90f0-b2b7256ea961" />
+
 ### 1) MongoDB Memory Leak - MongoBleed (CVE-2025-14847) 
 Ova ranjivost omogućava neautentifikovanom napadaču da daljinski "izvuče" (leak) sadržaj memorije MongoDB procesa. Problem nastaje u `zlib` biblioteci za kompresiju, unutar mrežnog sloja MongoDB-a, gde se zbog greške u rukovanju baferima mogu pročitati susedni delovi memorije koji nisu namenjeni klijentu.
 
