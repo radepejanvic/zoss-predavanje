@@ -28,7 +28,7 @@ Napadač koji ima pristup Docker host-u (lateral movement) može pronaći keytab
 Keytab fajlovi moraju imati restriktivne permisije (samo vlasnik može čitati), pravilnog vlasnika (hadoop system user), i periodičnu rotaciju kredencijala (na svakih 90 dana).
 
 **📍 Za kompletnu demonstraciju (ranjiv klaster, exploit script, test data, automated mitigation):**  
-**[GitHub - Hadoop Kerberos Attack Demo](https://github.com/radepejanvic/zoss-predavanje)**  
+**[GitHub - Hadoop Kerberos Attack Demo](https://github.com/radepejanvic/zoss-predavanje/tree/main/pretnje/Analytics%20Data%20Storage%20(Hadoop)/demo)**  
 
 ---
 
