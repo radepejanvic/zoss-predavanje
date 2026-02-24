@@ -3,6 +3,7 @@
 ## Pregled
 
 Ovaj projekat demonstrira ranjivost u Hadoop klasterima koji koriste Kerberos autentifikaciju. Napad eksploatiše loše konfigurisane permisije keytab fajlova kako bi se dobio neautorizovan pristup osetljivim podacima.
+Link do video demontracije -> **[Demo](https://youtu.be/EmSPwuRV07k)**
 
 ### Scenario Napada
 
