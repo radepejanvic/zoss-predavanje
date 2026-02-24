@@ -2,7 +2,7 @@
 
 ## Uvod
 
-Demonstracija sigurnosne ranjivosti koja nastaje kada web aplikacije napisane u Go Gin framework-u ne konfigurišu pravilno funkciju `SetTrustedProxies()`. Projekat pokazuje kako napadač može da iskoristi HTTP headere da zaobiđe sigurnosne mehanizme ili izazove Denial of Service (DoS) napad.
+Demonstracija sigurnosne ranjivosti koja nastaje kada web aplikacije napisane u Go Gin framework-u ne konfigurišu pravilno funkciju `SetTrustedProxies()`. Projekat pokazuje kako napadač može da iskoristi HTTP headere da zaobiđe sigurnosne mehanizme ili izazove Denial of Service (DoS) napad. Link do video demontracije -> **[Demo](https://youtu.be/2_nkGjmMd1U)**
 
 ## Pretnja: Manipulacija X-Forwarded-For Headera
 
