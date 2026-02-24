@@ -48,7 +48,7 @@ Napadač mora imati mrežni pristup serveru i server mora koristiti Gin ClientIP
 Praktična demonstracija:
 
 Za detaljan prikaz napada, implementaciju i testiranje pogledati:  
-📍 **[GitHub - X-Forwarded-For Attack Demo](https://github.com/radepejanvic/zoss-predavanje)**
+📍 **[GitHub - X-Forwarded-For Attack Demo]([https://github.com/radepejanvic/zoss-predavanje](https://github.com/radepejanvic/zoss-predavanje/tree/main/pretnje/Subscriptions%20%26%20Ticket%20Service%20(Gin)/demo))**
 
 Demonstracija sadrži:
 - Tri scenarija
