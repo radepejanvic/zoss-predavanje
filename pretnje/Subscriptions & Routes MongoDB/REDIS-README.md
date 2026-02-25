@@ -72,6 +72,8 @@ total_blocking_keys_on_nokey:0
 #### Demonstracija napada
 📍 **[GitHub - Redis NoAuth DoS](https://github.com/radepejanvic/zoss-predavanje/pretnje)**
 
+📍 **[YouTube - Redis NoAuth DoS](https://youtu.be/fjN9s_WhirY)**
+
 #### Mitigacije
 - Ažuriranje na bezbednu verziju: Instalacija zakrpe za Redis koja limitira resurse dodeljene neautentifikovanim klijentima.
 - Client Output Buffer Limits: Konfigurisanje client-output-buffer-limit u `redis.conf` za normal klijente kako bi Redis automatski prekinuo konekciju koja puni memoriju.
